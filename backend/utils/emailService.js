@@ -6,7 +6,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendLoginEmail = async (email, timezone) => {
   try {
-    // Format login time in user's local timezone
+    timezone = timezone || "Asia/Kolkata";
+
+    
     const loginTime = new Date().toLocaleString("en-US", {
       timeZone: timezone,
       hour12: true,
