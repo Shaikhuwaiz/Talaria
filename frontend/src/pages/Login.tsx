@@ -123,19 +123,24 @@ useEffect(() => {
               className="w-full p-3 rounded-lg bg-white/20 border border-white/40 text-white 
                          placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
             />
+<div className="flex items-center justify-between text-sm text-gray-300">
+  <label className="flex items-center space-x-2">
+    <input
+      type="checkbox"
+      checked={remember}
+      onChange={(e) => setRemember(e.target.checked)}
+      className="accent-yellow-400"
+    />
+    <span>Remember Me</span>
+  </label>
 
-            <div className="flex items-center justify-between text-sm text-gray-300">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                  className="accent-yellow-400"
-                />
-                <span>Remember Me</span>
-              </label>
-        
-            </div>
+  <Link
+    to="/forgot-password"
+    className="text-yellow-300 hover:underline"
+  >
+    Forgot password?
+  </Link>
+</div>
 
             <button
               type="submit"

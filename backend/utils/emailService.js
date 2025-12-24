@@ -4,7 +4,7 @@ dotenv.config();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export const sendLoginEmail = async (email, timezone) => {
+export const sendLoginEmail = async (email, timezone, otp) => {
   try {
     timezone = timezone || "Asia/Kolkata";
 
@@ -56,5 +56,25 @@ export const sendLoginEmail = async (email, timezone) => {
 
   } catch (err) {
     console.error("RESEND ERROR:", err);
+  }
+};
+
+export const sendOtpEmail = async (email, otp) => {
+  try {
+    const htmlContent = `
+      <h2>Talaria Password Reset</h2>
+      <p>Your OTP is:</p>
+      <h1>${otp}</h1>
+      <p>Valid for 5 minutes.</p>
+    `;
+
+    await resend.emails.send({
+      from: "Talaria <noreply@talaria.co.in>",
+      to: email,
+      subject: "Password Reset OTP – Talaria",
+      html: htmlContent
+    });
+  } catch (err) {
+    console.error("OTP EMAIL ERROR:", err);
   }
 };

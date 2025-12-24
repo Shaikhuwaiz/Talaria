@@ -9,6 +9,9 @@ import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./pages/Register";
 import 'leaflet/dist/leaflet.css';
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyOtp from "./pages/VerifyOtp";
+import ResetPassword from "./pages/ResetPassword";
 
 export default function App() {
   return (
@@ -17,7 +20,9 @@ export default function App() {
         {/* Public routes */}
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
+ <Route path="/forgot-password" element={<ForgotPassword />} />
+  <Route path="/verify-otp" element={<VerifyOtp />} />
+  <Route path="/reset-password" element={<ResetPassword />} />
         {/* Protected dashboard routes */}
         <Route
           path="/dashboard"

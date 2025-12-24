@@ -1,6 +1,9 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import Otp from "../models/otp.js";
+import generateOtp from "../utils/generateOtp.js";
+import { sendOtpEmail } from "../utils/emailService.js";
 import User from "../models/user.js";
 import { sendLoginEmail } from "../utils/emailService.js";
 
@@ -19,7 +22,69 @@ router.post("/register", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
 
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    // remove old OTPs
+    await Otp.deleteMany({ email, purpose: "FORGOT_PASSWORD" });
+
+    const otp = generateOtp();
+
+    await Otp.create({
+      email,
+      otp,
+      purpose: "FORGOT_PASSWORD",
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+    });
+
+    await sendOtpEmail(email, otp);
+
+    res.json({ message: "OTP sent to email" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+router.post("/verify-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const record = await Otp.findOne({
+      email,
+      otp,
+      purpose: "FORGOT_PASSWORD"
+    });
+
+    if (!record)
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+
+    res.json({ verified: true });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    user.password = newPassword; // bcrypt handled in model
+    await user.save();
+
+    await Otp.deleteMany({ email, purpose: "FORGOT_PASSWORD" });
+
+    res.json({ message: "Password reset successful" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 router.post("/login", async (req, res) => {
   try {
     console.log("LOGIN ATTEMPT for:", req.body.email);
