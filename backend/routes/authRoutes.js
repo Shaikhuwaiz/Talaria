@@ -6,6 +6,7 @@ import generateOtp from "../utils/generateOtp.js";
 import { sendOtpEmail } from "../utils/emailService.js";
 import User from "../models/user.js";
 import { sendLoginEmail } from "../utils/emailService.js";
+import { sendPasswordResetSuccessEmail } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -79,6 +80,8 @@ router.post("/reset-password", async (req, res) => {
     await user.save();
 
     await Otp.deleteMany({ email, purpose: "FORGOT_PASSWORD" });
+
+ await sendPasswordResetSuccessEmail(email);
 
     res.json({ message: "Password reset successful" });
   } catch (err) {

@@ -62,10 +62,50 @@ export const sendLoginEmail = async (email, timezone, otp) => {
 export const sendOtpEmail = async (email, otp) => {
   try {
     const htmlContent = `
-      <h2>Talaria Password Reset</h2>
-      <p>Your OTP is:</p>
-      <h1>${otp}</h1>
-      <p>Valid for 5 minutes.</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="font-family: Arial, sans-serif;">
+        <tr>
+          <td align="center" style="padding: 20px;">
+            <!-- Header -->
+            <table cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="vertical-align: middle;">
+                  <img 
+                    src="https://raw.githubusercontent.com/Shaikhuwaiz/talaria-assets/main/logo.png"
+                    width="28"
+                    alt="Talaria"
+                    style="display: block;"
+                  />
+                </td>
+                <td style="padding-left: 8px; font-size: 22px; font-weight: bold;">
+                  Talaria Password Reset
+                </td>
+              </tr>
+            </table>
+
+            <!-- Body -->
+            <p style="margin-top: 20px; font-size: 16px;">
+              Your OTP is:
+            </p>
+
+            <div style="
+              font-size: 32px;
+              font-weight: bold;
+              letter-spacing: 6px;
+              margin: 10px 0;
+            ">
+              ${otp}
+            </div>
+
+            <p style="font-size: 14px; color: #555;">
+              Valid for 5 minutes.
+            </p>
+
+            <p style="font-size: 12px; color: #888; margin-top: 20px;">
+              If you did not request this, you can safely ignore this email.
+            </p>
+          </td>
+        </tr>
+      </table>
     `;
 
     await resend.emails.send({
@@ -76,5 +116,38 @@ export const sendOtpEmail = async (email, otp) => {
     });
   } catch (err) {
     console.error("OTP EMAIL ERROR:", err);
+  }
+};
+export const sendPasswordResetSuccessEmail = async (email) => {
+  try {
+    const htmlContent = `
+      <table width="100%" cellpadding="0" cellspacing="0"
+             style="font-family: Arial, sans-serif;">
+        <tr>
+          <td align="center" style="padding: 20px;">
+            <h2 style="margin-bottom: 10px;">
+              Password Changed Successfully
+            </h2>
+
+            <p style="font-size: 15px; color: #333;">
+              Your Talaria account password was updated successfully.
+            </p>
+
+            <p style="font-size: 13px; color: #666;">
+              If you did not perform this action, please reset your password immediately.
+            </p>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    await resend.emails.send({
+      from: "Talaria <noreply@talaria.co.in>",
+      to: email,
+      subject: "Your Talaria password was changed",
+      html: htmlContent
+    });
+  } catch (err) {
+    console.error("RESET SUCCESS EMAIL ERROR:", err);
   }
 };
