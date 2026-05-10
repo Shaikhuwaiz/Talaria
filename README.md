@@ -19,7 +19,9 @@ Freight is a full-stack logistics and shipment tracking platform built using the
 ## Tech Stack
 
 ### Frontend
-- React
+<p align="center">
+  React<img src="https://skillicons.dev/icons?i=react&perline=1" />
+</p>
 - TypeScript
 - Vite
 - Tailwind CSS
@@ -40,9 +42,6 @@ Freight is a full-stack logistics and shipment tracking platform built using the
 - Mapbox API
 - Resend Email API
 
-<p align="center">
-  <img src="https://skillicons.dev/icons?i=react,ts,nodejs,express,mongodb,docker,git,github,vercel,render,vite,tailwind&perline=6" />
-</p>
 
 ## Project Structure
 
