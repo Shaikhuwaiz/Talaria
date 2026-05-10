@@ -1,0 +1,22 @@
+services:
+  simple-login-backend:
+    build: ./backend
+    ports:
+      - "7000:7000"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  simple-login-frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - simple-login-backend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
