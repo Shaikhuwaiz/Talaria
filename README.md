@@ -19,27 +19,26 @@ Freight is a full-stack logistics and shipment tracking platform built using the
 ## Tech Stack
 
 ### Frontend
-- React<img src="https://skillicons.dev/icons?i=react"  width="20" />
-- TypeScript  <img src="https://skillicons.dev/icons?i=ts"  width="20" />
-- Vite
-- Tailwind CSS
+- React <img src="https://skillicons.dev/icons?i=react" width="18" style="vertical-align: middle;" />
+- TypeScript <img src="https://skillicons.dev/icons?i=ts" width="18" style="vertical-align: middle;" />
+- Vite <img src="https://skillicons.dev/icons?i=vite" width="18" style="vertical-align: middle;" />
+- Tailwind CSS <img src="https://skillicons.dev/icons?i=tailwind" width="18" style="vertical-align: middle;" />
 
 ### Backend
-- Node.js
-- Express.js
-- MongoDB Atlas
+- Node.js <img src="https://skillicons.dev/icons?i=nodejs" width="18" style="vertical-align: middle;" />
+- Express.js <img src="https://skillicons.dev/icons?i=express" width="18" style="vertical-align: middle;" />
+- MongoDB Atlas <img src="https://skillicons.dev/icons?i=mongodb" width="18" style="vertical-align: middle;" />
 - JWT Authentication
 
 ### DevOps & Deployment
-- Docker
+- Docker <img src="https://skillicons.dev/icons?i=docker" width="18" style="vertical-align: middle;" />
 - Docker Compose
 - Render
-- Vercel
+- Vercel <img src="https://skillicons.dev/icons?i=vercel" width="18" style="vertical-align: middle;" />
 
 ### APIs & Services
 - Mapbox API
 - Resend Email API
-
 
 ## Project Structure
 
