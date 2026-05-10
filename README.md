@@ -20,7 +20,7 @@ Freight is a full-stack logistics and shipment tracking platform built using the
 
 ### Frontend
 <p align="left">
-  React<img src="https://skillicons.dev/icons?i=react" width="50" />
+  React<img src="https://skillicons.dev/icons?i=react" width="2" />
 </p>
 - TypeScript
 - Vite
