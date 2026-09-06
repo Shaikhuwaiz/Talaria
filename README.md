@@ -1,15 +1,15 @@
 # Freight – Global Freight & Shipment Tracking System
 
-Freight is a full-stack logistics and shipment tracking platform built using the MERN Stack with Vite. The platform enables users to manage shipments, monitor delivery activity, visualize global shipment locations on interactive maps, and handle secure authentication workflows.
+Freight is a full-stack logistics and shipment tracking platform built with React, TypeScript, Vite, Node.js, Express, and MongoDB. The platform enables users to manage shipments, monitor delivery activity, visualize global shipment locations on interactive maps, and handle secure authentication workflows.
 
 ## Features
 
-- Secure JWT-based authentication system
-- Shipment creation and management workflows
+- Secure JWT-based authentication
+- Shipment creation and management
 - Real-time shipment tracking with Mapbox integration
 - Automated login notification emails using Resend API
 - RESTful API architecture using Node.js and Express
-- Responsive frontend built with React + Vite
+- Responsive frontend built with React and Vite
 - MongoDB Atlas cloud database integration
 - Docker containerization with Docker Compose
 - Environment variable management using `.env`
@@ -19,37 +19,48 @@ Freight is a full-stack logistics and shipment tracking platform built using the
 ## Tech Stack
 
 ### Frontend
-- React <img src="https://skillicons.dev/icons?i=react" width="18" style="vertical-align: middle;" />
-- TypeScript <img src="https://skillicons.dev/icons?i=ts" width="18" style="vertical-align: middle;" />
-- Vite <img src="https://skillicons.dev/icons?i=vite" width="18" style="vertical-align: middle;" />
-- Tailwind CSS <img src="https://skillicons.dev/icons?i=tailwind" width="18" style="vertical-align: middle;" />
+
+[![Frontend](https://skillicons.dev/icons?i=react,ts,vite,tailwind)](https://skillicons.dev)
+
+React · TypeScript · Vite · Tailwind CSS
 
 ### Backend
-- Node.js <img src="https://skillicons.dev/icons?i=nodejs" width="18" style="vertical-align: middle;" />
-- Express.js <img src="https://skillicons.dev/icons?i=express" width="18" style="vertical-align: middle;" />
-- MongoDB Atlas <img src="https://skillicons.dev/icons?i=mongodb" width="18" style="vertical-align: middle;" />
-- JWT Authentication
+
+[![Backend](https://skillicons.dev/icons?i=nodejs,express,mongodb)](https://skillicons.dev)
+
+Node.js · Express.js · MongoDB Atlas · JWT
 
 ### DevOps & Deployment
-- Docker <img src="https://skillicons.dev/icons?i=docker" width="18" style="vertical-align: middle;" />
-- Docker Compose
-- Render
-- Vercel <img src="https://skillicons.dev/icons?i=vercel" width="18" style="vertical-align: middle;" />
+
+[![DevOps](https://skillicons.dev/icons?i=docker,vercel)](https://skillicons.dev)
+
+Docker · Docker Compose · Vercel · Render
 
 ### APIs & Services
-- Mapbox API
-- Resend Email API
+
+Mapbox API · Resend Email API
 
 ## Project Structure
 
-```bash
-Freight/
+```text
+Talaria/
 │
 ├── backend/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   └── server.js
+│
 ├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── ...
+│
 ├── docker-compose.yml
 ├── README.md
 └── .gitignore
+
 Installation
 Clone Repository
 git clone https://github.com/Shaikhuwaiz/Talaria.git

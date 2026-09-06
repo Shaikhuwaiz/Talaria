@@ -12,7 +12,7 @@ export default function Register() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      navigate("/dashboard", { replace: true });
+      navigate("/orders", { replace: true });
     }
   }, [navigate]);
 
@@ -22,7 +22,7 @@ export default function Register() {
     setSuccess("");
 
     try {
-     const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/register`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -39,9 +39,8 @@ export default function Register() {
 
       // ✅ Replace history so back button won't return here
       setTimeout(() => {
-        navigate("/", { replace: true });
+        navigate("/login", { replace: true });
       }, 1200);
-
     } catch (err) {
       console.error(err);
       setError("Server error");
@@ -49,73 +48,92 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* LEFT SECTION */}
-      <div className="relative w-3/5 hidden lg:flex flex-col justify-center items-start p-16 text-white">
-        <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
-          <source src="/videos/video1.mp4" type="video/mp4" />
+    <div className="flex min-h-screen bg-black text-white">
+      {/* ── LEFT · Video panel ─────────────────────────────────────────── */}
+      <div className="relative hidden lg:flex w-[55%] flex-col justify-between overflow-hidden p-12">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 h-full w-full object-cover"
+        >
+          <source src="/videos/video.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-black/50 to-transparent" />
-        <div className="relative z-10 max-w-lg translate-y-8">
-          <h1 className="text-5xl font-extrabold mb-4 drop-shadow-lg">
-            Join <span className="text-yellow-400">Talaria</span>
-          </h1>
-          <p className="text-lg text-gray-200 leading-relaxed">
-            Become part of our delivery network. Create your account to manage
-            shipments, track packages, and grow your business with us.
-          </p>
-        </div>
       </div>
 
-      {/* RIGHT SECTION */}
-      <div className="flex w-full lg:w-2/5 items-center justify-center bg-gradient-to-br from-[#1a1c2c] via-[#222b3a] to-[#1a1f2f]">
-        <div className="relative bg-white/15 backdrop-blur-2xl border border-white/25 rounded-2xl 
-                        shadow-2xl p-10 w-80 sm:w-96 text-white text-center">
-
-          <h2 className="text-3xl font-bold mb-6 text-white drop-shadow-sm">
-            Create Account
+      {/* ── RIGHT · Create account form ────────────────────────────────── */}
+      <div className="flex w-full lg:w-[45%] items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm">
+          <h2 className="text-3xl font-semibold tracking-tight">
+            Create account
           </h2>
+          <p className="mt-1.5 text-sm text-neutral-500">
+            One account for dispatching, tracking and reporting.
+          </p>
 
-          {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
-          {success && <p className="text-green-400 text-sm mb-3">{success}</p>}
+          {error && (
+            <p className="mt-5 rounded-lg border border-red-500/40 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-400">
+              {error}
+            </p>
+          )}
+          {success && (
+            <p className="mt-5 rounded-lg border border-green-500/40 bg-green-500/10 px-3.5 py-2.5 text-sm text-green-400">
+              {success}
+            </p>
+          )}
 
-          <form onSubmit={handleRegister} className="space-y-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full p-3 rounded-lg bg-white/20 border border-white/40 text-white 
-                         placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
+          <form onSubmit={handleRegister} className="mt-8 space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs text-neutral-400">
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="you@carrier.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3.5 py-2.5 text-white placeholder-neutral-500 outline-none transition-colors focus:border-white"
+              />
+            </div>
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full p-3 rounded-lg bg-white/20 border border-white/40 text-white 
-                         placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
+            <div>
+              <label className="mb-1.5 block text-xs text-neutral-400">
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="Min. 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3.5 py-2.5 text-white placeholder-neutral-500 outline-none transition-colors focus:border-white"
+              />
+            </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-yellow-400/90 hover:bg-yellow-500 text-black font-semibold rounded-lg 
-                         transition-all shadow-lg"
+              className="w-full rounded-full bg-white px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
             >
-              Register
+              Create account
             </button>
           </form>
 
-          <p className="text-sm mt-4 text-gray-200">
+          <p className="mt-5 text-sm text-neutral-400">
             Already have an account?{" "}
-            <Link to="/" className="text-yellow-300 hover:underline">
-              Login here
+            <Link
+              to="/login"
+              className="font-semibold text-white underline-offset-4 hover:underline"
+            >
+              Sign in
             </Link>
           </p>
 
+          <p className="mt-10 text-center text-[11px] uppercase tracking-widest text-neutral-600">
+            Talaria Freight Lines · DOT #2849172 · Insured
+          </p>
         </div>
       </div>
     </div>

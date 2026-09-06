@@ -38,49 +38,47 @@ export default function ForgotPassword() {
     }
   };
 
- return (
-  <AuthLayout
-    title="Reset Talaria Password"
-    description="Enter your registered email. We’ll send you a one-time password to securely reset your account."
-  >
-    <div className="relative bg-white/15 backdrop-blur-2xl border border-white/25 rounded-2xl shadow-2xl 
-                    p-10 w-80 sm:w-96 text-white text-center">
-      <h2 className="text-3xl font-bold mb-6 drop-shadow-sm">
-        Forgot Password
-      </h2>
+  return (
+    <AuthLayout>
+      <div className="w-80 sm:w-96 rounded-2xl border border-neutral-800 bg-neutral-900 p-10 text-center text-white">
+        <h2 className="mb-1.5 text-2xl font-semibold tracking-tight">
+          Forgot password
+        </h2>
+        <p className="mb-6 text-sm text-neutral-400">
+          Enter your registered email and we'll send you a one-time code.
+        </p>
 
-      {error && (
-        <p className="text-red-400 text-sm mb-3">{error}</p>
-      )}
+        {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full p-3 rounded-lg bg-white/20 border border-white/40 text-white
-                     placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full rounded-lg border border-neutral-700 bg-black px-3.5 py-2.5 text-white placeholder-neutral-500 outline-none transition-colors focus:border-white"
+          />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 bg-yellow-400/90 hover:bg-yellow-500 disabled:opacity-60
-                     text-black font-semibold rounded-lg transition-all shadow-lg"
-        >
-          {loading ? "Sending OTP..." : "Send OTP"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-full bg-white py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200 disabled:opacity-60"
+          >
+            {loading ? "Sending..." : "Send code"}
+          </button>
+        </form>
 
-      <p className="text-sm mt-4 text-gray-200">
-        Remember your password?{" "}
-        <Link to="/" className="text-yellow-300 hover:underline">
-          Back to login
-        </Link>
-      </p>
-    </div>
-  </AuthLayout>
-);
+        <p className="mt-5 text-sm text-neutral-400">
+          Remember your password?{" "}
+          <Link
+            to="/login"
+            className="font-semibold text-white underline-offset-4 hover:underline"
+          >
+            Back to login
+          </Link>
+        </p>
+      </div>
+    </AuthLayout>
+  );
 }

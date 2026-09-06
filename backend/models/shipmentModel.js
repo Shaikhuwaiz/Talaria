@@ -19,6 +19,11 @@ const shipmentSchema = new mongoose.Schema(
       default: "In Transit",
     },
     expectedDelivery: { type: Date, required: true },
+    truckType: {
+      type: String,
+      enum: ["Dry Van", "Flatbed", "Reefer", "Step Deck", "Box Truck"],
+      default: "Dry Van",
+    },
 
     // ✅ History is INSIDE schema now
     history: {

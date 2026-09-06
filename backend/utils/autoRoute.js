@@ -2,18 +2,19 @@
 
 import { CITY_COORDS } from "./cityCoords.js";
 
-// Major logistics hubs (must exist in CITY_COORDS)
+// Major logistics hubs (must exist in CITY_COORDS) —
+// U.S. road/parcel hubs (FedEx · UPS style ground network).
 const MAJOR_HUBS = [
-  "Dubai",
-  "Singapore",
-  "Istanbul",
-  "Frankfurt, Germany",
-  "Paris, France",
-  "London",
+  "Memphis",
+  "Louisville",
+  "Atlanta",
+  "Dallas",
+  "Chicago",
+  "Los Angeles",
   "New York, USA",
-  "Tokyo, Japan",
-  "Doha",
-  "Hong Kong",
+  "Seattle",
+  "Denver",
+  "Miami",
 ];
 
 // Haversine distance in km
@@ -87,6 +88,10 @@ function buildRoute(origin, destination) {
   if (!originCoord || !destCoord || !hub1Coord || !hub2Coord) {
     return [origin, hubFromOrigin, destination];
   }
+
+  // Prefer a direct route whenever both endpoints have known coordinates —
+  // avoids bogus hub detours (e.g. Charlotte → Massachusetts via Atlanta).
+  if (originCoord && destCoord) return [origin, destination];
 
   const path1 =
     haversineDistance(originCoord, hub1Coord) +

@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
-import DashboardLayout from "./layouts/DashboardLayout";
-import DashboardHome from "./pages/DashboardHome";
+import AppLayout from "./layouts/AppLayout";
 import Shipments from "./pages/Shipments";
 import CreateShipment from "./pages/CreateShipment";
 import Tracking from "./pages/Tracking";
@@ -18,25 +18,43 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
  <Route path="/forgot-password" element={<ForgotPassword />} />
   <Route path="/verify-otp" element={<VerifyOtp />} />
   <Route path="/reset-password" element={<ResetPassword />} />
-        {/* Protected dashboard routes */}
+        {/* Account routes (protected) */}
         <Route
-          path="/dashboard"
+          path="/orders"
           element={
             <ProtectedRoute>
-              <DashboardLayout />
+              <AppLayout />
             </ProtectedRoute>
           }
         >
-          <Route index element={<DashboardHome />} />
-          <Route path="shipments" element={<Shipments />} />
-          <Route path="shipments/create" element={<CreateShipment />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="tracking" element={<Tracking />} /> {/* ✅ Moved inside */}
+          <Route index element={<Shipments />} />
+          <Route path="create" element={<CreateShipment />} />
+        </Route>
+        <Route
+          path="/tracking"
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Tracking />} />
+        </Route>
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Profile />} />
         </Route>
       </Routes>
     </BrowserRouter>

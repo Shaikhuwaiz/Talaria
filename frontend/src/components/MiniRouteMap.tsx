@@ -1,5 +1,5 @@
 import React from "react";
-import { Plane } from "lucide-react";
+import { Truck } from "lucide-react";
 
 interface MiniRouteMapProps {
   origin: string;
@@ -31,11 +31,11 @@ export default function MiniRouteMap({
           <span className="text-sm text-gray-700 mt-1">{origin}</span>
         </div>
 
-        {/* Horizontal Line + Plane */}
+        {/* Horizontal Line + Truck */}
         <div className="relative w-2/3 h-1 bg-gray-300 rounded-full mx-2">
 
-          {/* Plane Icon */}
-          <Plane
+          {/* Truck Icon */}
+          <Truck
             className="text-blue-600 absolute -top-4"
             size={28}
             style={{

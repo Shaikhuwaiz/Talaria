@@ -1,3 +1,83 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Live cargo trucks (CARTO/OpenLayers markers) ──────────────────────── */
+.flight-plane {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.flight-plane .plane-glow {
+  position: absolute;
+  inset: -14px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  animation: plane-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes plane-pulse {
+  0%,
+  100% {
+    transform: scale(0.75);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.25;
+  }
+}
+
+.flight-plane-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+  will-change: transform;
+}
+
+/* ─── Origin / destination pins ──────────────────────────────────────────── */
+.flight-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.flight-pin-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.flight-pin--origin .flight-pin-dot {
+  background: #ef4444;
+}
+
+.flight-pin--dest .flight-pin-dot {
+  background: #34d399;
+}
+
+.flight-pin-label {
+  font: 600 11px Inter, sans-serif;
+  color: #111827;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}

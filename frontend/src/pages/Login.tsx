@@ -18,144 +18,148 @@ export default function Login() {
       setRemember(true);
     }
   }, []);
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    navigate("/dashboard", { replace: true });
-  }
-}, [navigate]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/orders", { replace: true });
+    }
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-  try {
- const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-  const data = await res.json();
-  if (!res.ok) {
-    setError(data.message || "Login failed");
-    return;
-  }
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || "Login failed");
+        return;
+      }
 
-  // Save token + email
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("email", email);
+      // Save token + email
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("email", email);
 
-  if (remember) {
-    localStorage.setItem("rememberedEmail", email);
-    localStorage.setItem("rememberedPassword", password);
-  } else {
-    localStorage.removeItem("rememberedEmail");
-    localStorage.removeItem("rememberedPassword");
-  }
+      if (remember) {
+        localStorage.setItem("rememberedEmail", email);
+        localStorage.setItem("rememberedPassword", password);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+        localStorage.removeItem("rememberedPassword");
+      }
 
-  // Redirect and prevent back navigation
-  setTimeout(() => {
-    navigate("/dashboard", { replace: true });
-    window.history.pushState(null, "", window.location.href);
-  }, 200);
-
-} catch (err) {
-  console.error(err);
-  setError("Server error");
-}
+      // Redirect and prevent back navigation
+      setTimeout(() => {
+        navigate("/orders", { replace: true });
+        window.history.pushState(null, "", window.location.href);
+      }, 200);
+    } catch (err) {
+      console.error(err);
+      setError("Server error");
+    }
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* ✅ Left Section with video + tagline */}
-      <div className="relative w-3/5 hidden lg:flex flex-col justify-center items-start p-16 text-white">
+    <div className="flex min-h-screen bg-black text-white">
+      {/* ── LEFT · Video panel ─────────────────────────────────────────── */}
+      <div className="relative hidden lg:flex w-[55%] flex-col justify-between overflow-hidden p-12">
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         >
-          <source src="/videos/video.mp4" type="video/mp4" />
-        </video>
-
-        <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-black/50 to-transparent" />
-
-        <div className="relative z-10 max-w-lg translate-y-8">
-          <h1 className="text-5xl font-extrabold mb-4 drop-shadow-lg">
-            Welcome to <span className="text-yellow-400">Talaria</span>
-          </h1>
-          <p className="text-lg text-gray-200 leading-relaxed">
-            Delivering excellence with speed. Log in to manage your shipments,
-            track deliveries, and power your logistics journey.
-          </p>
-        </div>
+          <source src="/videos/video1.mp4" type="video/mp4" />
+        </video>"absolute 
       </div>
 
-      {/* ✅ Right Section — Glassmorphic Login Card */}
-      <div className="flex w-full lg:w-2/5 items-center justify-center bg-gradient-to-br from-[#1a1c2c] via-[#222b3a] to-[#1a1f2f]">
-        <div className="relative bg-white/15 backdrop-blur-2xl border border-white/25 rounded-2xl shadow-2xl 
-                        p-10 w-80 sm:w-96 text-white text-center">
-          <h2 className="text-3xl font-bold mb-6 text-white drop-shadow-sm">
-            User Login
-          </h2>
+      {/* ── RIGHT · Sign-in form ───────────────────────────────────────── */}
+      <div className="flex w-full lg:w-[45%] items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm">
+          <h2 className="text-3xl font-semibold tracking-tight">Sign in</h2>
+          <p className="mt-1.5 text-sm text-neutral-500">
+            Access the ops console to manage loads and track trucks live.
+          </p>
 
-          {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
+          {error && (
+            <p className="mt-5 rounded-lg border border-red-500/40 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-400">
+              {error}
+            </p>
+          )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full p-3 rounded-lg bg-white/20 border border-white/40 text-white 
-                         placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
+          <form onSubmit={handleLogin} className="mt-8 space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs text-neutral-400">
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="you@carrier.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3.5 py-2.5 text-white placeholder-neutral-500 outline-none transition-colors focus:border-white"
+              />
+            </div>
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full p-3 rounded-lg bg-white/20 border border-white/40 text-white 
-                         placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
-<div className="flex items-center justify-between text-sm text-gray-300">
-  <label className="flex items-center space-x-2">
-    <input
-      type="checkbox"
-      checked={remember}
-      onChange={(e) => setRemember(e.target.checked)}
-      className="accent-yellow-400"
-    />
-    <span>Remember Me</span>
-  </label>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-xs text-neutral-400">Password</label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-neutral-300 underline-offset-4 hover:underline"
+                >
+                  Forgot?
+                </Link>
+              </div>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3.5 py-2.5 text-white placeholder-neutral-500 outline-none transition-colors focus:border-white"
+              />
+            </div>
 
-  <Link
-    to="/forgot-password"
-    className="text-yellow-300 hover:underline"
-  >
-    Forgot password?
-  </Link>
-</div>
+            <label className="flex items-center gap-2 text-sm text-neutral-400">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="accent-white"
+              />
+              Remember me
+            </label>
 
             <button
               type="submit"
-              className="w-full py-3 bg-yellow-400/90 hover:bg-yellow-500 text-black font-semibold rounded-lg 
-                         transition-all shadow-lg"
+              className="w-full rounded-full bg-white px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
             >
-              Login
+              Sign in
             </button>
           </form>
 
-          <p className="text-sm mt-4 text-gray-200">
-            Don’t have an account?{" "}
-            <Link to="/register" className="text-yellow-300 hover:underline">
-              Register here
+          <p className="mt-5 text-sm text-neutral-400">
+            New to the network?{" "}
+            <Link
+              to="/register"
+              className="font-semibold text-white underline-offset-4 hover:underline"
+            >
+              Create an account
             </Link>
+          </p>
+
+          <p className="mt-10 text-center text-[11px] uppercase tracking-widest text-neutral-600">
+            Talaria Freight Lines · DOT #2849172 · Insured
           </p>
         </div>
       </div>

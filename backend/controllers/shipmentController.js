@@ -1,5 +1,27 @@
 import Shipment from "../models/shipmentModel.js";
 import { generateHistory } from "../utils/autoRoute.js";
+import { resolveLocationCoords } from "../utils/resolveLocationCoords.js";
+
+const toFlightPayload = (shipment) => {
+  const originCoords = resolveLocationCoords(shipment.origin);
+  const destinationCoords = resolveLocationCoords(shipment.destination);
+  const routeCoords = (shipment.history ?? [])
+    .map((h) => resolveLocationCoords(h.location))
+    .filter((c) => Array.isArray(c) && c.length === 2);
+
+  return {
+    shipmentId: shipment.trackingId,
+    trackingId: shipment.trackingId,
+    origin: shipment.origin,
+    destination: shipment.destination,
+    status: shipment.status || "In Transit",
+    originCoords,
+    destinationCoords,
+    routeCoords: routeCoords.length >= 2
+      ? routeCoords
+      : [originCoords, destinationCoords].filter(Boolean),
+  };
+};
 
 // ✅ Get all shipments
 const getShipments = async (req, res) => {
@@ -23,16 +45,14 @@ const getShipmentById = async (req, res) => {
 };
 
 // ✅ Create shipment WITH auto travel history
+// Status/lastLocation are intentionally NOT supplied by the client — the
+// system derives them from the auto-generated route history.
 const createShipment = async (req, res) => {
   try {
-    const { trackingId, origin, destination, status, expectedDelivery, lastLocation } = req.body;
+    const { trackingId, origin, destination, expectedDelivery, truckType } = req.body;
+    const status = "In Transit";
 
     const history = generateHistory(origin, destination, status);
-
-    // ✅ Sync final history with shipment status
-    if (status === "Delivered" && history.length > 0) {
-      history[history.length - 1].status = "Delivered";
-    }
 
     const shipment = await Shipment.create({
       trackingId,
@@ -40,9 +60,13 @@ const createShipment = async (req, res) => {
       destination,
       status,
       expectedDelivery,
-      lastLocation,
+      truckType: truckType || "Dry Van",
       history,
     });
+
+    // ✅ Real-time broadcast to every connected dashboard
+    const io = req.app.get("io");
+    if (io) io.emit("shipmentCreated", toFlightPayload(shipment));
 
     res.status(201).json(shipment);
   } catch (err) {

@@ -7,7 +7,7 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,13 +52,11 @@ const [success, setSuccess] = useState(false);
         return;
       }
 
-      // Redirect to login (your login is at "/")
-  setSuccess(true);
+      setSuccess(true);
 
-setTimeout(() => {
-  navigate("/", { replace: true });
-}, 2500);
-
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 2500);
     } catch {
       setError("Server error");
     } finally {
@@ -67,81 +65,71 @@ setTimeout(() => {
   };
 
   return (
-  <AuthLayout
-    title="Create New Password"
-    description="Choose a strong password to secure your Talaria account."
-  >
-    <div
-      className="relative bg-white/15 backdrop-blur-2xl border border-white/25
-                 rounded-2xl shadow-2xl p-10 w-80 sm:w-96 text-white text-center"
-    >
-      {success ? (
-        <>
-          <h2 className="text-3xl font-bold mb-4 text-green-400">
-            Password Updated
-          </h2>
+    <AuthLayout>
+      <div className="w-80 sm:w-96 rounded-2xl border border-neutral-800 bg-neutral-900 p-10 text-center text-white">
+        {success ? (
+          <>
+            <h2 className="mb-4 text-2xl font-semibold text-white">
+              Password updated
+            </h2>
+            <p className="text-sm text-neutral-400">
+              Your password has been reset successfully.
+            </p>
+            <p className="mt-4 text-xs text-neutral-500">
+              Redirecting to login…
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 className="mb-1.5 text-2xl font-semibold tracking-tight">
+              New password
+            </h2>
+            <p className="mb-6 text-sm text-neutral-400">
+              Choose a strong password for your account.
+            </p>
 
-          <p className="text-gray-200 text-sm mb-4">
-            Your password has been reset successfully.
-          </p>
+            {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
-          <p className="text-gray-400 text-xs">
-            Redirecting to login…
-          </p>
-        </>
-      ) : (
-        <>
-          <h2 className="text-3xl font-bold mb-6 drop-shadow-sm">
-            Reset Password
-          </h2>
+            <form onSubmit={handleReset} className="space-y-4">
+              <input
+                type="password"
+                placeholder="New password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-lg border border-neutral-700 bg-black px-3.5 py-2.5 text-white placeholder-neutral-500 outline-none transition-colors focus:border-white"
+              />
 
-          {error && (
-            <p className="text-red-400 text-sm mb-3">{error}</p>
-          )}
+              <input
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full rounded-lg border border-neutral-700 bg-black px-3.5 py-2.5 text-white placeholder-neutral-500 outline-none transition-colors focus:border-white"
+              />
 
-          <form onSubmit={handleReset} className="space-y-4">
-            <input
-              type="password"
-              placeholder="New password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full p-3 rounded-lg bg-white/20 border border-white/40 text-white
-                         placeholder-gray-200 focus:outline-none focus:ring-2
-                         focus:ring-yellow-400"
-            />
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full bg-white py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200 disabled:opacity-60"
+              >
+                {loading ? "Updating..." : "Update password"}
+              </button>
+            </form>
 
-            <input
-              type="password"
-              placeholder="Confirm new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full p-3 rounded-lg bg-white/20 border border-white/40 text-white
-                         placeholder-gray-200 focus:outline-none focus:ring-2
-                         focus:ring-yellow-400"
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-yellow-400/90 hover:bg-yellow-500
-                         disabled:opacity-60 text-black font-semibold rounded-lg
-                         transition-all shadow-lg"
-            >
-              {loading ? "Updating..." : "Update Password"}
-            </button>
-          </form>
-
-          <p className="text-sm mt-4 text-gray-200">
-            Back to{" "}
-            <Link to="/" className="text-yellow-300 hover:underline">
-              Login
-            </Link>
-          </p>
-        </>
-      )}
-    </div>
-  </AuthLayout>
-);
+            <p className="mt-5 text-sm text-neutral-400">
+              Back to{" "}
+              <Link
+                to="/login"
+                className="font-semibold text-white underline-offset-4 hover:underline"
+              >
+                login
+              </Link>
+            </p>
+          </>
+        )}
+      </div>
+    </AuthLayout>
+  );
 }

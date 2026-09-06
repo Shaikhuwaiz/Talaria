@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getPlaneProgress, nearestLocationOf } from "../utils/planeProgress";
+import type { LiveFlight } from "../components/LiveFlightMap";
+import FlightSimulationDriver from "../components/FlightSimulationDriver";
+import { resolveLocationCoords } from "../utils/shipmentCoords";
+import { flagSrc } from "../utils/flags";
 
 interface Shipment {
   _id?: string;
@@ -9,90 +14,20 @@ interface Shipment {
   status: string;
   expectedDelivery: string;
   lastLocation: string;
+  history?: { location: string; status?: string; date?: string }[];
 }
 
+const toLiveFlight = (s: Shipment): LiveFlight => ({
+  shipmentId: s.trackingId,
+  origin: s.origin,
+  destination: s.destination,
+  status: s.status,
+  routeCoords: (s.history ?? [])
+    .map((h) => resolveLocationCoords(h.location))
+    .filter((c): c is [number, number] => Array.isArray(c) && c.length === 2),
+});
+
 const ITEMS_PER_PAGE = 10;
-
-const normalizeKey = (str: string): string =>
-  (str || "").replace(/\s+/g, "").toLowerCase();
-
-const countryCodes: Record<string, string> = {
- unitedstates: "US",
-  usa: "US",
-  india: "IN",
-  germany: "DE",
-  france: "FR",
-  canada: "CA",
-  china: "Cn",
-  australia: "AU",
-  pune: "IN",
-  kerla: "IN",
-  nigeria: "NG",
-  mumbai: "IN",
-  govandi: "IN",
-  chennai: "IN",
-  bangalore: "IN",
-  newyork: "US",
-  hyderabad: "IN",
-  london: "GB",
-  heathrow: "GB",
-  jordan: "JO",
-  damascus: "SY",
-  paris: "FR",
-  berlin: "DE",
-  toronto: "CA",
-  vancouver: "CA",
-  sydney: "AU",
-  melbourne: "AU",
-  delhi: "IN",
-  kolkata: "IN",
-  madrid: "ES",
-  barcelona: "ES",
-  rome: "IT",
-  milan: "IT",
-  amsterdam: "NL",
-  rotterdam: "NL",
-  zurich: "CH",
-  geneva: "CH",
-  oslo: "NO",
-  stockholm: "SE",
-  copenhagen: "DK",
-  helsinki: "FI",
-  warsaw: "PL",
-  prague: "CZ",
-  budapest: "HU",
-  vienna: "AT",
-  brussels: "BE",
-  lisbon: "PT",
-  athens: "GR",
-  dublin: "IE",
-  boston: "US",
-  chicago: "US",
-  seattle: "US",
-  miami: "US",
-  faridabad: "IN",
-  gurgaon: "IN",
-  noida: "IN",
-  lucknow: "IN",
-  jaipur: "IN",
-  ahmedabad: "IN",
-  surat: "IN",
-  bangladesh: "BD",
-  singapore: "SG",
-  dubai: "AE",
-  oman: "OM",
-  yemen: "YE",
-  syria: "SY",
-  istanbul: "TR",
-  sanfrancisco: "US",
-  losangeles: "US",
-  tokyo: "JP",
-  beijing: "CN",
-  riodejaneiro: "BR",
-  capetown: "ZA",
-  mexicocity: "MX",
-  buenosaires: "AR",
-};
 
 export default function Shipments() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -105,6 +40,12 @@ export default function Shipments() {
     direction: "asc" | "desc";
   } | null>(null);
   const navigate = useNavigate();
+
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setTick((x) => x + 1), 1000);
+    return () => window.clearInterval(t);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -147,6 +88,10 @@ export default function Shipments() {
     currentPage * ITEMS_PER_PAGE
   );
 
+  const liveFlights = shipments
+    .filter((s) => s.status === "In Transit")
+    .map((s) => toLiveFlight(s));
+
   const handlePrev = () => setCurrentPage((p) => Math.max(p - 1, 1));
   const handleNext = () => setCurrentPage((p) => Math.min(p + 1, totalPages));
 
@@ -163,46 +108,49 @@ const getStatusClasses = (status: string) => {
     case "Delivered":
       return `
         text-green-300
-        border border-green-400
-        rounded-full px-3 py-1 text-sm font-semibold
-        bg-green-900/30
-        shadow-[inset_0_0_8px_2px_rgba(34,197,94,0.7)]
+        border border-green-400/40
+        rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap
+        bg-green-500/10
       `;
     case "In Transit":
       return `
-        text-yellow-300
-        border border-yellow-400
-        rounded-full px-3 py-1 text-sm font-semibold
-        bg-yellow-900/20
-        shadow-[inset_0_0_8px_2px_rgba(234,179,8,0.7)]
+        text-white
+        border border-neutral-500
+        rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap
+        bg-white/5
       `;
     case "Undelivered":
       return `
         text-red-300
-        border border-red-400
-        rounded-full px-3 py-1 text-sm font-semibold
-        bg-red-900/20
-        shadow-[inset_0_0_8px_2px_rgba(239,68,68,0.7)]
+        border border-red-400/40
+        rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap
+        bg-red-500/10
+      `;
+    case "Return":
+      return `
+        text-sky-300
+        border border-sky-400/40
+        rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap
+        bg-sky-500/10
       `;
     default:
       return `
         text-gray-300
-        border border-gray-400
-        rounded-full px-3 py-1 text-sm font-semibold
-        bg-gray-800
-        shadow-[inset_0_0_8px_2px_rgba(156,163,175,0.5)]
+        border border-neutral-600
+        rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap
+        bg-transparent
       `;
   }
 };
   if (loading) {
     return (
       <div className="p-6 max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold mb-6 text-center text-blue-700">
+        <h2 className="text-3xl font-bold mb-6 text-center text-white">
           Shipments Dashboard
         </h2>
         <div className="space-y-3 animate-pulse">
           {[...Array(ITEMS_PER_PAGE)].map((_, idx) => (
-            <div key={idx} className="h-10 bg-gray-200 rounded-md w-full"></div>
+            <div key={idx} className="h-10 bg-neutral-800 rounded-md w-full"></div>
           ))}
         </div>
       </div>
@@ -219,7 +167,8 @@ const getStatusClasses = (status: string) => {
 
   return (
     <div className="p-8 max-w-7xl mx-auto text-white">
-      <h2 className="text-4xl font-bold mb-6 text-center text-yellow-400 drop-shadow-lg">
+      <FlightSimulationDriver flights={liveFlights} />
+      <h2 className="text-4xl font-bold mb-6 text-center text-white">
         Shipments Dashboard
       </h2>
 
@@ -232,20 +181,20 @@ const getStatusClasses = (status: string) => {
       setSearch(e.target.value);
       setCurrentPage(1);
     }}
-    className="w-80 p-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:ring-2 focus:ring-yellow-400"
+    className="w-80 p-3 rounded-lg bg-neutral-900 border border-neutral-700 text-white placeholder-neutral-500 focus:ring-2 focus:ring-white outline-none"
   />
 
   <button
-    onClick={() => navigate("/dashboard/shipments/create")}
-    className="px-5 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg shadow-lg transition-all"
+    onClick={() => navigate("/orders/create")}
+    className="px-5 py-3 bg-white hover:bg-neutral-200 text-black font-semibold rounded-full transition"
   >
     + Create Shipment
   </button>
 </div>
 
-      <div className="overflow-x-auto rounded-xl backdrop-blur-xl bg-[#0f1a2b]/60 border border-white/10 shadow-2xl">
+      <div className="overflow-x-auto rounded-xl bg-neutral-900 border border-neutral-800">
         <table className="w-full text-left">
-          <thead className="bg-white/10">
+          <thead className="bg-white/5 text-neutral-400">
             <tr>
               <th
                 className="p-4 cursor-pointer"
@@ -274,33 +223,38 @@ const getStatusClasses = (status: string) => {
 
           <tbody>
             {paginatedShipments.map((s, idx) => {
+const live = getPlaneProgress(s.trackingId);
+const arrived = live?.arrived === true;
+const returning = live?.returning === true;
+const displayStatus = returning ? "Return" : arrived ? "Delivered" : s.status;
+const displayLoc = live
+  ? nearestLocationOf(live.lat, live.lng)
+  : s.lastLocation;
 let progress = 0;
 let progressColor = "";
 let progressGlow = "";
 
-if (s.status === "Delivered") {
+if (s.status === "Delivered" || s.status === "Undelivered" || arrived) {
   progress = 100;
-  progressColor = "bg-green-400";
-  progressGlow =
-    "shadow-[0_0_12px_4px_rgba(34,197,94,0.9)]";
+  progressColor =
+    s.status === "Undelivered" ? "bg-red-400" : "bg-green-400";
+  progressGlow = "";
+} else if (returning) {
+  progress = live ? Math.round((1 - live.p) * 100) : 100;
+  progressColor = "bg-sky-400";
+  progressGlow = "";
 } else if (s.status === "In Transit") {
-  progress = 55;
-  progressColor = "bg-yellow-400";
-  progressGlow =
-    "shadow-[0_0_12px_4px_rgba(234,179,8,0.9)]";
-} else if (s.status === "Undelivered") {
-  progress = 100;
-  progressColor = "bg-red-400";
-  progressGlow =
-    "shadow-[0_0_12px_4px_rgba(239,68,68,0.9)]";
+  progress = live ? Math.round(live.p * 100) : 0;
+  progressColor = "bg-white";
+  progressGlow = "";
 }
               return (
                 <tr
                   key={s._id || s.trackingId}
                   className={
                     idx % 2 === 0
-                      ? "bg-white/5 hover:bg-white/10 transition"
-                      : "bg-white/10 hover:bg-white/20 transition"
+                      ? "bg-white/[0.02] hover:bg-white/[0.05] transition"
+                      : "bg-transparent hover:bg-white/[0.05] transition"
                   }
                 >
                   <td className="p-4 font-semibold">{s.trackingId}</td>
@@ -309,32 +263,28 @@ if (s.status === "Delivered") {
                     <div className="flex items-center gap-4">
                       {/* Origin */}
                       <div className="flex items-center gap-2">
-                        {countryCodes[normalizeKey(s.origin)] ? (
+                        {flagSrc(s.origin) ? (
                           <img
-                            src={`https://flagcdn.com/24x18/${countryCodes[
-                              normalizeKey(s.origin)
-                            ]?.toLowerCase()}.png`}
+                            src={flagSrc(s.origin)}
                             alt={s.origin}
-                            className="rounded-sm"
+                            className="w-6 h-4 object-cover rounded-sm"
                           />
                         ) : (
-                          <span className="text-yellow-400 font-bold mx-2" />
+                          <span className="w-6 h-4 bg-neutral-800 rounded-sm" />
                         )}
                         <span className="capitalize">{s.origin}</span>
                       </div>
                       <span className="text-gray-500 font-bold">→</span>
                       {/* Destination */}
                       <div className="flex items-center gap-2">
-                        {countryCodes[normalizeKey(s.destination)] ? (
+                        {flagSrc(s.destination) ? (
                           <img
-                            src={`https://flagcdn.com/24x18/${countryCodes[
-                              normalizeKey(s.destination)
-                            ]?.toLowerCase()}.png`}
+                            src={flagSrc(s.destination)}
                             alt={s.destination}
-                            className="rounded-sm"
+                            className="w-6 h-4 object-cover rounded-sm"
                           />
                         ) : (
-                          <span className="w-6 h-4 bg-gray-200 rounded-sm" />
+                          <span className="w-6 h-4 bg-neutral-800 rounded-sm" />
                         )}
                         <span className="capitalize">{s.destination}</span>
                       </div>
@@ -344,15 +294,18 @@ if (s.status === "Delivered") {
                   <td className="p-3">
                     <span
                       className={`px-2 py-1 rounded-full text-sm font-semibold ${getStatusClasses(
-                        s.status
+                        displayStatus
                       )}`}
                     >
-                      {s.status}
+                      {displayStatus}
                     </span>
                   </td>
 
                   <td className="p-3 ">
-   <div className="w-full h-2 rounded-full bg-gray-700/40 overflow-visible relative">
+   <div
+     className="w-full h-2 rounded-full bg-white/10 overflow-hidden relative"
+     dir={returning ? "rtl" : "ltr"}
+   >
   <div
     className={`
       h-2 rounded-full ${progressColor}
@@ -365,18 +318,16 @@ if (s.status === "Delivered") {
 
                   <td className="p-3 ">
                     <div className="flex items-center gap-2">
-                      {countryCodes[normalizeKey(s.lastLocation)] ? (
+                      {flagSrc(displayLoc) ? (
                         <img
-                          src={`https://flagcdn.com/24x18/${countryCodes[
-                            normalizeKey(s.lastLocation)
-                          ]?.toLowerCase()}.png`}
-                          alt={s.lastLocation}
+                          src={flagSrc(displayLoc)}
+                          alt={displayLoc}
                           className="w-6 h-4 object-cover rounded-sm"
                         />
                       ) : (
-                        <span className="w-6 h-4 bg-gray-200 rounded-sm" />
+                        <span className="w-6 h-4 bg-neutral-800 rounded-sm" />
                       )}
-                      <span className="capitalize">{s.lastLocation}</span>
+                      <span className="capitalize">{displayLoc || "—"}</span>
                     </div>
                   </td>
 
@@ -422,7 +373,7 @@ if (s.status === "Delivered") {
         <button
           onClick={handlePrev}
           disabled={currentPage === 1}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50"
+          className="px-4 py-2 border border-neutral-700 text-white rounded-full hover:border-white disabled:opacity-40 transition"
         >
           Prev
         </button>
@@ -432,7 +383,7 @@ if (s.status === "Delivered") {
         <button
           onClick={handleNext}
           disabled={currentPage === totalPages}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50"
+          className="px-4 py-2 border border-neutral-700 text-white rounded-full hover:border-white disabled:opacity-40 transition"
         >
           Next
         </button>
