@@ -111,6 +111,105 @@ function buildRoute(origin, destination) {
   return [origin, midHub, destination];
 }
 
+// Weather-driven delay reasons shown on "In Transit" check-ins
+const WEATHER_DELAYS = [
+  "Heavy snowstorm ahead — parcel held at sorting facility",
+  "Severe thunderstorm warning — delayed departure",
+  "Heavy sleet across the region — extended transit time",
+  "Icy conditions on the highway — carrier delay",
+  "Winter storm watch — delivery window rescheduled",
+];
+
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// MAIN: generate a UPS/FedEx-style movement timeline
+// (Order Created → Departed Facility → In Transit check-ins → Out for Delivery → Delivered)
+export function generateMovements(origin, destination, status = "In Transit") {
+  const via = buildRoute(origin, destination);
+  const stops = via.length;
+  const checkins = Math.max(0, stops - 2); // intermediate sorting stops
+  const stepMs = 6 * 60 * 60 * 1000; // ~6 hours between events
+  const totalEvents = 2 + checkins * 2 + 2;
+  let t = Date.now() - totalEvents * stepMs;
+
+  const events = [];
+  const push = (ev) => {
+    events.push({
+      delayed: false,
+      delayReason: "",
+      ...ev,
+      timestamp: new Date(t).toISOString(),
+    });
+    t += stepMs;
+  };
+
+  push({
+    status: "Order Created",
+    location: origin,
+    completed: true,
+    details: "Label generated, parcel received at warehouse",
+  });
+  push({
+    status: "Departed Facility",
+    location: origin,
+    completed: true,
+    details: `Parcel departed the ${origin} facility`,
+  });
+
+  for (let i = 1; i < stops - 1; i++) {
+    const city = via[i];
+    push({
+      status: "In Transit",
+      location: city,
+      details: `Arrived at sorting facility in ${city}`,
+    });
+    push({
+      status: "In Transit",
+      location: city,
+      details: `Departed sorting facility in ${city}`,
+    });
+  }
+
+  const dest = via[stops - 1] ?? destination;
+  push({
+    status: "Out for Delivery",
+    location: dest,
+    details: "Loaded onto local delivery vehicle",
+  });
+  push({
+    status: "Delivered",
+    location: dest,
+    details:
+      (status || "").toLowerCase().includes("undeliver")
+        ? "Delivery attempted — held at facility"
+        : "Delivered and signed for by recipient",
+  });
+
+  // Mark events completed based on the shipment's overall status
+  const lower = (status || "").toLowerCase();
+  let completedCount;
+  if (lower.includes("undeliver")) completedCount = events.length - 1;
+  else if (lower.includes("deliver")) completedCount = events.length;
+  else completedCount = 2 + Math.ceil(checkins); // partial transit
+
+  events.forEach((ev, i) => {
+    ev.completed = i < completedCount;
+  });
+
+  // Simulate a weather delay on the latest completed in-transit check-in
+  const delayIdx = completedCount - 1;
+  if (
+    delayIdx >= 2 &&
+    events[delayIdx]?.status === "In Transit" &&
+    Math.random() < 0.6
+  ) {
+    events[delayIdx].delayed = true;
+    events[delayIdx].delayReason = pick(WEATHER_DELAYS);
+  }
+
+  return events;
+}
+
 // MAIN: generate history for any route
 export function generateHistory(origin, destination, status = "In Transit") {
   const routeCities = buildRoute(origin, destination);

@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LiveFlightMap, { type LiveFlight } from "../components/LiveFlightMap";
+import TrackingTimeline from "../components/TrackingTimeline";
 import { resolveLocationCoords } from "../utils/shipmentCoords";
+import { isWarehouseOrigin } from "../utils/warehouses";
+import { getPlaneProgress } from "../utils/planeProgress";
+import type { MovementEvent } from "../utils/trackingStages";
 
 interface ShipmentHistory {
   date: string;
@@ -16,6 +20,8 @@ interface Shipment {
   status: string;
   expectedDelivery: string;
   history: ShipmentHistory[];
+  movements?: MovementEvent[];
+  originMode?: string;
 }
 
 export default function Tracking() {
@@ -23,6 +29,17 @@ export default function Tracking() {
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [, setTick] = useState(0);
+
+  // Re-render on an interval so the timeline stays in sync with the live
+  // truck/plane progress the map pushes into the shared planeProgress store.
+  useEffect(() => {
+    if (!shipment) return;
+    const id = window.setInterval(() => setTick((x) => x + 1), 500);
+    return () => window.clearInterval(id);
+  }, [shipment]);
+
+  const live = shipment ? getPlaneProgress(shipment.trackingId) : undefined;
 
   const getDotRingClasses = (status: string) => {
     switch (status) {
@@ -157,6 +174,9 @@ export default function Tracking() {
                   origin: shipment.origin,
                   destination: shipment.destination,
                   status: shipment.status,
+                  originIsWarehouse:
+                    shipment.originMode === "warehouse" ||
+                    isWarehouseOrigin(shipment.origin),
                   routeCoords: (shipment.history ?? [])
                     .map((h) => resolveLocationCoords(h.location))
                     .filter(
@@ -168,91 +188,23 @@ export default function Tracking() {
             />
           </div>
 
-          <h4 className="text-lg font-semibold mb-3">Travel History</h4>
-
-          {shipment.history.length === 0 ? (
-            <p className="text-neutral-500 text-sm">
-              No history available yet.
-            </p>
-          ) : (
-            <div className="mt-6 pl-10">
-              <ul className="space-y-10 border-l-2 border-neutral-700 pl-6">
-                {(() => {
-                  // Sort newest first
-                  let sorted = shipment.history
-                    .slice()
-                    .sort(
-                      (a, b) =>
-                        new Date(b.date).getTime() - new Date(a.date).getTime()
-                    );
-
-                  // Reorder depending on final shipment status
-                  if (shipment.status === "Undelivered" && sorted.length >= 2) {
-                    [sorted[0], sorted[1]] = [sorted[1], sorted[0]];
+          <TrackingTimeline
+            movements={shipment.movements}
+            history={shipment.history}
+            currentStatus={shipment.status}
+            expectedDelivery={shipment.expectedDelivery}
+            theme="dark"
+            showHeader={false}
+            liveProgress={
+              live
+                ? {
+                    p: live.p,
+                    arrived: live.arrived,
+                    returning: live.returning,
                   }
-
-                  if (shipment.status === "Delivered" && sorted.length >= 1) {
-                    sorted[0].status = "Delivered";
-                  }
-
-                  if (shipment.status === "In Transit" && sorted.length >= 1) {
-                    sorted[0].status = "In Transit";
-                  }
-
-                  return sorted.map((h, i) => {
-                    // DOT COLOR SELECTION
-                    const dotClass =
-                      shipment.status === "Delivered" && i === 0
-                        ? "bg-green-400"
-                        : shipment.status === "Undelivered" && i === 0
-                        ? "bg-red-500"
-                        : shipment.status === "In Transit" && i === 0
-                        ? "bg-white"
-                        : i === 1
-                        ? "bg-neutral-500"
-                        : "bg-neutral-600";
-
-                    // LABEL COLOR
-                    const labelClass =
-                      dotClass.includes("red")
-                        ? "text-red-400"
-                        : dotClass.includes("green")
-                        ? "text-green-400"
-                        : dotClass.includes("white")
-                        ? "text-white"
-                        : "text-neutral-300";
-
-                    return (
-                      <li key={i} className="relative">
-                        <span
-                          className={`absolute -left-[31px] top-1 h-3 w-3 rounded-full ${dotClass}`}
-                        />
-
-                        <div className="space-y-1 text-left">
-                          <p className="text-sm text-neutral-500">
-                            {new Date(h.date).toLocaleString()}
-                          </p>
-
-                          <p className={`font-semibold ${labelClass}`}>
-                            {shipment.status === "Undelivered" && i === 0
-                              ? "Undelivered"
-                              : h.status}
-                          </p>
-
-                          <p className="text-neutral-400 text-sm">
-                            {h.location}
-                          </p>
-                          <p className="text-neutral-500 text-xs">
-                            {h.details}
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  });
-                })()}
-              </ul>
-            </div>
-          )}
+                : undefined
+            }
+          />
         </div>
       )}
     </div>

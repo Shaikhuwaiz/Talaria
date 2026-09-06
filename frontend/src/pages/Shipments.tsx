@@ -4,7 +4,9 @@ import { getPlaneProgress, nearestLocationOf } from "../utils/planeProgress";
 import type { LiveFlight } from "../components/LiveFlightMap";
 import FlightSimulationDriver from "../components/FlightSimulationDriver";
 import { resolveLocationCoords } from "../utils/shipmentCoords";
+import { isWarehouseOrigin } from "../utils/warehouses";
 import { flagSrc } from "../utils/flags";
+import StageStepper from "../components/StageStepper";
 
 interface Shipment {
   _id?: string;
@@ -15,6 +17,7 @@ interface Shipment {
   expectedDelivery: string;
   lastLocation: string;
   history?: { location: string; status?: string; date?: string }[];
+  originMode?: string;
 }
 
 const toLiveFlight = (s: Shipment): LiveFlight => ({
@@ -22,12 +25,46 @@ const toLiveFlight = (s: Shipment): LiveFlight => ({
   origin: s.origin,
   destination: s.destination,
   status: s.status,
+  originIsWarehouse: s.originMode === "warehouse" || isWarehouseOrigin(s.origin),
   routeCoords: (s.history ?? [])
     .map((h) => resolveLocationCoords(h.location))
     .filter((c): c is [number, number] => Array.isArray(c) && c.length === 2),
 });
 
 const ITEMS_PER_PAGE = 10;
+
+// Pick a concise label from a full address string (e.g. "1234 Harbor Blvd,
+// Suite 300, California" → "California"). Falls back to the trailing segment,
+// or the original value when there's nothing to shorten.
+const US_STATE_NAMES = new Set([
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+  "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia",
+  "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
+  "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
+  "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota",
+  "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia",
+  "Washington", "West Virginia", "Wisconsin", "Wyoming",
+]);
+
+const COUNTRY_ALIASES: Record<string, string> = {
+  USA: "United States",
+  US: "United States",
+  UK: "United Kingdom",
+};
+
+const conciseLocation = (value?: string): string => {
+  const v = (value ?? "").trim();
+  if (!v) return v;
+  const parts = v.split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length <= 1) return v;
+  const last = parts[parts.length - 1];
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (US_STATE_NAMES.has(parts[i])) return parts[i];
+  }
+  return COUNTRY_ALIASES[last.toUpperCase()] ?? last;
+};
 
 export default function Shipments() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -230,24 +267,8 @@ const displayStatus = returning ? "Return" : arrived ? "Delivered" : s.status;
 const displayLoc = live
   ? nearestLocationOf(live.lat, live.lng)
   : s.lastLocation;
-let progress = 0;
-let progressColor = "";
-let progressGlow = "";
-
-if (s.status === "Delivered" || s.status === "Undelivered" || arrived) {
-  progress = 100;
-  progressColor =
-    s.status === "Undelivered" ? "bg-red-400" : "bg-green-400";
-  progressGlow = "";
-} else if (returning) {
-  progress = live ? Math.round((1 - live.p) * 100) : 100;
-  progressColor = "bg-sky-400";
-  progressGlow = "";
-} else if (s.status === "In Transit") {
-  progress = live ? Math.round(live.p * 100) : 0;
-  progressColor = "bg-white";
-  progressGlow = "";
-}
+const originLabel = conciseLocation(s.origin);
+const destLabel = conciseLocation(s.destination);
               return (
                 <tr
                   key={s._id || s.trackingId}
@@ -263,30 +284,30 @@ if (s.status === "Delivered" || s.status === "Undelivered" || arrived) {
                     <div className="flex items-center gap-4">
                       {/* Origin */}
                       <div className="flex items-center gap-2">
-                        {flagSrc(s.origin) ? (
+                        {flagSrc(originLabel) ? (
                           <img
-                            src={flagSrc(s.origin)}
-                            alt={s.origin}
+                            src={flagSrc(originLabel)}
+                            alt={originLabel}
                             className="w-6 h-4 object-cover rounded-sm"
                           />
                         ) : (
                           <span className="w-6 h-4 bg-neutral-800 rounded-sm" />
                         )}
-                        <span className="capitalize">{s.origin}</span>
+                        <span className="capitalize">{originLabel}</span>
                       </div>
                       <span className="text-gray-500 font-bold">→</span>
                       {/* Destination */}
                       <div className="flex items-center gap-2">
-                        {flagSrc(s.destination) ? (
+                        {flagSrc(destLabel) ? (
                           <img
-                            src={flagSrc(s.destination)}
-                            alt={s.destination}
+                            src={flagSrc(destLabel)}
+                            alt={destLabel}
                             className="w-6 h-4 object-cover rounded-sm"
                           />
                         ) : (
                           <span className="w-6 h-4 bg-neutral-800 rounded-sm" />
                         )}
-                        <span className="capitalize">{s.destination}</span>
+                        <span className="capitalize">{destLabel}</span>
                       </div>
                     </div>
                   </td>
@@ -302,19 +323,8 @@ if (s.status === "Delivered" || s.status === "Undelivered" || arrived) {
                   </td>
 
                   <td className="p-3 ">
-   <div
-     className="w-full h-2 rounded-full bg-white/10 overflow-hidden relative"
-     dir={returning ? "rtl" : "ltr"}
-   >
-  <div
-    className={`
-      h-2 rounded-full ${progressColor}
-      ${progressGlow}
-      transition-all duration-500
-    `}
-    style={{ width: `${progress}%` }}
-  />
-</div>          </td>
+    <StageStepper status={displayStatus} theme="dark" live={live} />
+          </td>
 
                   <td className="p-3 ">
                     <div className="flex items-center gap-2">

@@ -24,6 +24,7 @@ export interface LiveFlight {
   destination: string;
   status?: string;
   routeCoords?: [number, number][];
+  originIsWarehouse?: boolean;
 }
 
 const CARTO_KEY = (import.meta.env.VITE_CARTO_KEY as string | undefined)?.trim();
@@ -89,6 +90,29 @@ const makePin = (color: string, title: string) => {
   el.style.backgroundColor = color;
   el.style.border = "2px solid #ffffff";
   el.style.boxShadow = "0 1px 4px rgba(0,0,0,0.5)";
+  el.style.zIndex = "20";
+  return el;
+};
+
+const makeWarehousePin = (title: string) => {
+  const el = document.createElement("div");
+  el.title = title;
+  el.style.width = "34px";
+  el.style.height = "34px";
+  el.style.display = "flex";
+  el.style.alignItems = "center";
+  el.style.justifyContent = "center";
+  el.style.zIndex = "20";
+  const img = document.createElement("img");
+  img.src = "/icons8-warehouse.png";
+  img.alt = "warehouse";
+  img.draggable = false;
+  img.style.width = "27px";
+  img.style.height = "27px";
+  img.style.objectFit = "contain";
+  img.style.pointerEvents = "none";
+  img.style.filter = "drop-shadow(0 1px 3px rgba(0,0,0,0.45))";
+  el.appendChild(img);
   return el;
 };
 
@@ -239,7 +263,9 @@ export default function LiveFlightMap({
         const storeKey = `${flight.shipmentId}-origin`;
         if (!pinOverlaysRef.current.has(storeKey)) {
           const o = new Overlay({
-            element: makePin("#059669", flight.origin),
+            element: flight.originIsWarehouse
+              ? makeWarehousePin(flight.origin)
+              : makePin("#059669", flight.origin),
             positioning: "center-center",
             offset: [0, 0],
             stopEvent: false,

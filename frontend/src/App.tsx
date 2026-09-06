@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
+import FleetDetail from "./pages/FleetDetail";
 import Login from "./pages/Login";
 import AppLayout from "./layouts/AppLayout";
 import Shipments from "./pages/Shipments";
@@ -19,6 +20,7 @@ export default function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Landing />} />
+        <Route path="/fleet/:id" element={<FleetDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
  <Route path="/forgot-password" element={<ForgotPassword />} />

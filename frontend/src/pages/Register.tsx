@@ -49,7 +49,7 @@ export default function Register() {
 
   return (
     <div className="flex min-h-screen bg-black text-white">
-      {/* ── LEFT · Video panel ─────────────────────────────────────────── */}
+      {/* ── LEFT · Video panel  */}
       <div className="relative hidden lg:flex w-[55%] flex-col justify-between overflow-hidden p-12">
         <video
           autoPlay
@@ -62,7 +62,7 @@ export default function Register() {
         </video>
       </div>
 
-      {/* ── RIGHT · Create account form ────────────────────────────────── */}
+      {/* RIGHT · Create account form*/}
       <div className="flex w-full lg:w-[45%] items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           <h2 className="text-3xl font-semibold tracking-tight">

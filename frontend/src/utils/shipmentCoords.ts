@@ -11,6 +11,13 @@ export const LOCATION_COORDS: Record<string, [number, number]> = {
   sanfrancisco: [37.7749, -122.4194],
   losangeles: [34.0522, -118.2437],
 
+  // Talaria facility cities
+  oakland: [37.8044, -122.2712],
+  commerce: [33.9766, -118.1562],
+  hodgkins: [41.7717, -87.8601],
+  collegepark: [33.6534, -84.4494],
+  newark: [40.7357, -74.1724],
+
   // U.S. trucking / express-parcel cities
   memphis: [35.1495, -90.049],
   louisville: [38.2527, -85.7585],
@@ -113,10 +120,85 @@ export const LOCATION_COORDS: Record<string, [number, number]> = {
   wyoming: [43.076, -107.2902],
 };
 
+const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, "");
+
+const STATE_ABBR: Record<string, string> = {
+  al: "alabama",
+  ak: "alaska",
+  az: "arizona",
+  ar: "arkansas",
+  ca: "california",
+  co: "colorado",
+  ct: "connecticut",
+  de: "delaware",
+  fl: "florida",
+  ga: "georgia",
+  hi: "hawaii",
+  id: "idaho",
+  il: "illinois",
+  in: "indiana",
+  ia: "iowa",
+  ks: "kansas",
+  ky: "kentucky",
+  la: "louisiana",
+  me: "maine",
+  md: "maryland",
+  ma: "massachusetts",
+  mi: "michigan",
+  mn: "minnesota",
+  ms: "mississippi",
+  mo: "missouri",
+  mt: "montana",
+  ne: "nebraska",
+  nv: "nevada",
+  nh: "newhampshire",
+  nj: "newjersey",
+  nm: "newmexico",
+  ny: "newyork",
+  nc: "northcarolina",
+  nd: "northdakota",
+  oh: "ohio",
+  ok: "oklahoma",
+  or: "oregon",
+  pa: "pennsylvania",
+  ri: "rhodeisland",
+  sc: "southcarolina",
+  sd: "southdakota",
+  tn: "tennessee",
+  tx: "texas",
+  ut: "utah",
+  vt: "vermont",
+  va: "virginia",
+  wa: "washington",
+  wv: "westvirginia",
+  wi: "wisconsin",
+  wy: "wyoming",
+};
+
 export function resolveLocationCoords(
   location?: string
 ): [number, number] | null {
   if (!location) return null;
-  const key = location.toLowerCase().replace(/\s+/g, "");
-  return LOCATION_COORDS[key] || null;
+  const n = normalize(location);
+
+  if (LOCATION_COORDS[n]) return LOCATION_COORDS[n];
+
+  const parts = location.split(",").map(normalize).filter(Boolean);
+  for (const part of parts) {
+    if (LOCATION_COORDS[part]) return LOCATION_COORDS[part];
+    const expanded = STATE_ABBR[part];
+    if (expanded && LOCATION_COORDS[expanded]) return LOCATION_COORDS[expanded];
+  }
+
+  let best: [number, number] | null = null;
+  let bestLen = -1;
+  for (const [key, coords] of Object.entries(LOCATION_COORDS)) {
+    const kn = normalize(key);
+    if (kn.length > bestLen && n.includes(kn)) {
+      best = coords;
+      bestLen = kn.length;
+    }
+  }
+
+  return best;
 }

@@ -3,13 +3,12 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import talariaLogo from "../image/logo.svg";
 import LiveTrackPreview from "../components/LiveTrackPreview";
+import FleetShowcase from "../components/FleetShowcase";
 import {
   ArrowRight,
-  Boxes,
   ChevronLeft,
   ChevronRight,
   Clock,
-  Gauge,
   Headphones,
   Mail,
   MapPin,
@@ -18,12 +17,9 @@ import {
   Radar,
   Route,
   ShieldCheck,
-  Snowflake,
   Star,
   Truck,
-  Warehouse,
   X,
-  Zap,
 } from "lucide-react";
 
 /* ── Industrial bits ─────────────────────────────────────────────────── */
@@ -58,65 +54,45 @@ const NAV_LINKS = [
   { label: "Road tests", href: "#reviews" },
 ];
 
-const SERVICES = [
-  {
-    icon: Truck,
-    accent: "text-white border-white/15 bg-white/5",
-    title: "Flatbed & Dry Van",
-    text: "Open-deck and enclosed trailers for pallets, steel, lumber and everything in between — dispatched same day.",
-  },
-  {
-    icon: Snowflake,
-    accent: "text-white border-white/15 bg-white/5",
-    title: "Refrigerated (Reefer)",
-    text: "Temperature-controlled trailers with live temp monitoring for produce, pharma and perishable freight.",
-  },
-  {
-    icon: Zap,
-    accent: "text-white border-white/15 bg-white/5",
-    title: "Expedite & Hot-Shot",
-    text: "When the plant can't wait — dedicated trucks rolling 24/7 with time-critical delivery windows.",
-  },
-  {
-    icon: Boxes,
-    accent: "text-white border-white/15 bg-white/5",
-    title: "LTL Consolidation",
-    text: "Ship floor space, not full trailers. We consolidate multiple loads onto one cost-efficient run.",
-  },
-  {
-    icon: Warehouse,
-    accent: "text-neutral-400 border-white/15 bg-white/5",
-    title: "Warehousing & Cross-dock",
-    text: "Terminal hubs for staging, transfer and final-mile dispatch at our freight yards.",
-  },
-  {
-    icon: Gauge,
-    accent: "text-white border-white/15 bg-white/5",
-    title: "Over-Dimensional",
-    text: "Permits, pilot cars and route planning for oversized and overweight cargo, handled end to end.",
-  },
-];
-
 const STEPS = [
   {
     n: "01",
+    title: "Request a quote",
     icon: Phone,
-    text: "Request a quote — tell us load, lane and pickup window. Booked in minutes, no app juggling.",
+    text: "Tell us the load, the lane and your pickup window. Booked in minutes — no app juggling, no phone tag.",
   },
   {
     n: "02",
+    title: "Rig dispatched",
     icon: Truck,
-    text: "The nearest available rig is dispatched to your dock with a driver and an ETA.",
+    text: "The nearest available rig rolls to your dock with a vetted driver, a route plan and an ETA.",
   },
   {
     n: "03",
+    title: "Follow it live",
     icon: Radar,
-    text: "Follow the truck live on real road routes and get milestone updates while it rolls.",
+    text: "Watch the truck on real highway routes and get milestone updates the whole way across.",
   },
   {
     n: "04",
+    title: "Signed, sealed, delivered",
     icon: ShieldCheck,
-    text: "Signed, sealed, delivered — electronic POD on file the moment the load hits the dock.",
+    text: "Electronic POD on file the moment the load hits your dock — proof of delivery without the paperwork.",
+  },
+];
+
+const HERO_SLIDES = [
+  {
+    img: "/hero/highway.jpg",
+    alt: "Freight truck rolling down an American mountain highway",
+  },
+  {
+    img: "/hero/dusk.jpg",
+    alt: "Cargo truck on a highway at dusk",
+  },
+  {
+    img: "/hero/flags.jpg",
+    alt: "Truck driving past American flags",
   },
 ];
 
@@ -175,12 +151,20 @@ export default function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(1);
+  const [heroIdx, setHeroIdx] = useState(0);
 
   useEffect(() => {
     const t = window.setInterval(() => {
       setDir(1);
       setIdx((i) => (i + 1) % REVIEWS.length);
     }, 5200);
+    return () => window.clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const t = window.setInterval(() => {
+      setHeroIdx((i) => (i + 1) % HERO_SLIDES.length);
+    }, 7000);
     return () => window.clearInterval(t);
   }, []);
 
@@ -311,9 +295,25 @@ export default function Landing() {
       </header>
 
       {/* ── Hero ───────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-black to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.08),transparent_55%)]" />
+      <section className="relative overflow-hidden bg-neutral-950">
+        <div className="absolute inset-0">
+          {HERO_SLIDES.map((slide, i) => (
+            <img
+              key={slide.img}
+              src={slide.img}
+              alt={slide.alt}
+              className={`absolute inset-0 h-full w-full object-cover transition-all duration-[1600ms] ease-in-out ${
+                heroIdx === i
+                  ? "opacity-70 scale-[1.05]"
+                  : "opacity-0 scale-100"
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(8,12,20,0.4)_0%,rgba(9,13,22,0.25)_40%,rgba(9,13,22,0.1)_72%,transparent_100%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-neutral-950" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0b1120]/60 via-transparent to-[#0b1120]/40" />
 
         <div className="relative mx-auto max-w-6xl px-5 pt-20 pb-24">
           <motion.div
@@ -377,51 +377,40 @@ export default function Landing() {
               </div>
             </div>
           </motion.div>
+
+          <div className="mt-8 flex items-center justify-center gap-2">
+            {HERO_SLIDES.map((s, i) => (
+              <button
+                key={s.img}
+                onClick={() => setHeroIdx(i)}
+                aria-label={`Show hero image ${i + 1}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  heroIdx === i
+                    ? "w-8 bg-white"
+                    : "w-2.5 bg-white/30 hover:bg-white/60"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ── The fleet (services) ───────────────────────────────────────── */}
       <section id="services" className="bg-white text-black scroll-mt-20">
         <div className="mx-auto max-w-6xl px-5 py-20">
-        <div className="max-w-2xl">
-          <Eyebrow dark>The fleet</Eyebrow>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight">
-            Heated, covered & hauled
-          </h2>
-          <p className="mt-4 text-neutral-600">
-            Every trailer class your freight needs — dispatched from our yards,
-            tracked on every mile.
-          </p>
-        </div>
+          <div className="max-w-2xl">
+            <Eyebrow dark>The fleet</Eyebrow>
+            <h2 className="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight">
+              From expedite to over-dimensional
+            </h2>
+            <p className="mt-4 text-neutral-600">
+              Every trailer class your freight needs — dispatched from our yards and
+              tracked on every mile. Capacity scales from expedite hot-shots to full
+              over-dimensional permits.
+            </p>
+          </div>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {SERVICES.map((s, i) => (
-            <motion.div
-              key={s.title}
-              variants={fade}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ delay: (i % 3) * 0.08 }}
-              className="group overflow-hidden rounded-lg border border-neutral-800 bg-black text-white hover:-translate-y-1 hover:border-neutral-600 transition-all"
-            >
-              <div className="border-t-4 border-white/20" />
-              <div className="p-6">
-                <span
-                  className={`grid h-12 w-12 place-items-center rounded-md border ${s.accent}`}
-                >
-                  <s.icon size={22} />
-                </span>
-                <h3 className="mt-4 text-xl font-semibold tracking-tight">
-                  {s.title}
-                </h3>
-                <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
-                  {s.text}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+          <FleetShowcase />
         </div>
       </section>
 
@@ -437,31 +426,56 @@ export default function Landing() {
           </h2>
         </div>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((s, i) => (
-            <motion.div
-              key={s.n}
-              variants={fade}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ delay: i * 0.1 }}
-              className="relative overflow-hidden rounded-lg border border-neutral-800 bg-white/[0.02] p-6"
-            >
-              <span className="absolute -right-3 -top-5 text-6xl font-black text-white/[0.05]">
-                {s.n}
-              </span>
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white">
-                <s.icon size={20} />
-              </span>
-              <h3 className="mt-4 font-semibold tracking-tight">
-                Step {s.n}
-              </h3>
-              <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
-                {s.text}
-              </p>
-            </motion.div>
-          ))}
+        <div className="mt-16">
+          <div className="relative mx-auto max-w-4xl">
+            <div className="absolute left-[15px] top-1 bottom-1 w-px -translate-x-1/2 bg-gradient-to-b from-white/30 via-white/10 to-transparent lg:left-1/2" />
+
+            <div className="space-y-14 lg:space-y-0">
+              {STEPS.map((s, i) => {
+                const left = i % 2 === 0;
+                return (
+                  <motion.div
+                    key={s.n}
+                    variants={fade}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ delay: 0.08 }}
+                    className={`relative pl-16 lg:w-1/2 lg:pb-16 lg:pl-0 ${
+                      left ? "lg:mr-0 lg:pr-14" : "lg:ml-auto lg:pl-14"
+                    }`}
+                  >
+                    <span
+                      className={`absolute left-[15px] top-1 z-10 grid h-8 w-8 -translate-x-1/2 place-items-center rounded-full border border-white/20 bg-neutral-950 text-[11px] font-bold text-neutral-300 ring-4 ring-neutral-950 lg:left-auto ${
+                        left
+                          ? "lg:right-0 lg:translate-x-1/2"
+                          : "lg:left-0 lg:-translate-x-1/2"
+                      }`}
+                    >
+                      {s.n}
+                    </span>
+
+                    <div className="group relative rounded-xl border border-neutral-800 bg-white/[0.02] p-6 sm:p-7 transition-all duration-300 hover:-translate-y-0.5 hover:border-neutral-600">
+                      <span className="absolute right-4 top-3 text-5xl font-black text-white/[0.04] transition-colors group-hover:text-white/[0.07]">
+                        {s.n}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/5 text-white">
+                          <s.icon size={20} />
+                        </span>
+                        <h3 className="text-lg font-semibold tracking-tight">
+                          {s.title}
+                        </h3>
+                      </div>
+                      <p className="mt-4 text-sm text-neutral-400 leading-relaxed">
+                        {s.text}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </section>
 

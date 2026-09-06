@@ -1,5 +1,5 @@
 import Shipment from "../models/shipmentModel.js";
-import { generateHistory } from "../utils/autoRoute.js";
+import { generateHistory, generateMovements } from "../utils/autoRoute.js";
 import { resolveLocationCoords } from "../utils/resolveLocationCoords.js";
 
 const toFlightPayload = (shipment) => {
@@ -15,6 +15,7 @@ const toFlightPayload = (shipment) => {
     origin: shipment.origin,
     destination: shipment.destination,
     status: shipment.status || "In Transit",
+    originMode: shipment.originMode || "custom",
     originCoords,
     destinationCoords,
     routeCoords: routeCoords.length >= 2
@@ -49,10 +50,11 @@ const getShipmentById = async (req, res) => {
 // system derives them from the auto-generated route history.
 const createShipment = async (req, res) => {
   try {
-    const { trackingId, origin, destination, expectedDelivery, truckType } = req.body;
+    const { trackingId, origin, destination, expectedDelivery, truckType, originMode } = req.body;
     const status = "In Transit";
 
     const history = generateHistory(origin, destination, status);
+    const movements = generateMovements(origin, destination, status);
 
     const shipment = await Shipment.create({
       trackingId,
@@ -61,7 +63,9 @@ const createShipment = async (req, res) => {
       status,
       expectedDelivery,
       truckType: truckType || "Dry Van",
+      originMode: originMode || "custom",
       history,
+      movements,
     });
 
     // ✅ Real-time broadcast to every connected dashboard

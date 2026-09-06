@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import LiveFlightMap, { type LiveFlight } from "./LiveFlightMap";
 import { resolveLocationCoords } from "../utils/shipmentCoords";
+import { isWarehouseOrigin } from "../utils/warehouses";
 
 type Shipment = {
   trackingId: string;
@@ -9,6 +10,7 @@ type Shipment = {
   destination: string;
   status: string;
   history?: { location: string }[];
+  originMode?: string;
 };
 
 const toLiveFlight = (s: Shipment): LiveFlight => ({
@@ -16,6 +18,7 @@ const toLiveFlight = (s: Shipment): LiveFlight => ({
   origin: s.origin,
   destination: s.destination,
   status: s.status,
+  originIsWarehouse: s.originMode === "warehouse" || isWarehouseOrigin(s.origin),
   routeCoords: (s.history ?? [])
     .map((h) => resolveLocationCoords(h.location))
     .filter((c): c is [number, number] => Array.isArray(c) && c.length === 2),
