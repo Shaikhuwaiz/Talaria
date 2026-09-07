@@ -14,7 +14,7 @@ function uidFromSrc(src: string): string {
 export default function SketchfabViewer({
   src,
   className = "",
-  autoSpin = 2,
+  autoSpin = 0,
 }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -54,6 +54,23 @@ export default function SketchfabViewer({
         transparent: 1,
         autospin: autoSpin,
         scrollwheel: 1,
+        ui_controls: 0,
+        ui_stop: 0,
+        ui_infos: 0,
+        ui_social: 0,
+        ui_share: 0,
+        ui_watermark: 0,
+        ui_fav: 0,
+        ui_embed: 0,
+        ui_help: 0,
+        ui_fullscreen: 0,
+        ui_settings: 0,
+        ui_annotations: 0,
+        ui_inspector: 0,
+        ui_hint: 0,
+        ui_ar: 0,
+        ui_vr: 0,
+        ui_theme: "dark",
         success: (api: any) => {
           if (disposed) return;
           api.addEventListener("viewerready", () => {

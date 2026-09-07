@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import talariaLogo from "../image/logo.svg";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -50,22 +51,55 @@ export default function Register() {
   return (
     <div className="flex min-h-screen bg-black text-white">
       {/* ── LEFT · Video panel  */}
-      <div className="relative hidden lg:flex w-[55%] flex-col justify-between overflow-hidden p-12">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 h-full w-full object-cover"
-        >
-          <source src="/videos/video.mp4" type="video/mp4" />
-        </video>
+      <div className="relative hidden lg:flex w-[55%] flex-col p-6">
+        <div className="relative flex-1 overflow-hidden rounded-2xl border border-white/10 bg-neutral-950 shadow-2xl shadow-black/40">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 h-full w-full object-cover opacity-75"
+          >
+            <source src="/videos/video.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+
+          <Link to="/" className="absolute left-8 top-8 flex items-center gap-2.5">
+            <img src={talariaLogo} alt="Talaria" className="h-7 w-7 invert" />
+            <span className="flex flex-col leading-none">
+              <span className="text-lg font-semibold tracking-tight">
+                Talaria
+              </span>
+              <span className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.32em] text-neutral-400">
+                Freight
+              </span>
+            </span>
+          </Link>
+
+          <div className="absolute inset-x-0 bottom-0 p-9">
+            <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              48-state live coverage
+            </p>
+            <h2 className="mt-3 max-w-md text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+              One account for the whole network.
+            </h2>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-neutral-300">
+              Dispatch, track and report from a single console — with a live
+              ETA on every load from dock to dock.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* RIGHT · Create account form*/}
       <div className="flex w-full lg:w-[45%] items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
-          <h2 className="text-3xl font-semibold tracking-tight">
+          <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-500">
+            <span className="h-1.5 w-1.5 rounded-full bg-white" />
+            Talaria ops console
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight">
             Create account
           </h2>
           <p className="mt-1.5 text-sm text-neutral-500">

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, MoveRight } from "lucide-react";
-import { FLEET, FLEET_SCALE_LABELS } from "../utils/fleet";
+import { ArrowUpRight } from "lucide-react";
+import { FLEET } from "../utils/fleet";
 
 export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
   const card = dark
@@ -12,45 +12,6 @@ export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
 
   return (
     <div>
-      {/* Capacity scale — expedite (light) → over-dimensional (heavy) */}
-      <div
-        className={`rounded-2xl border p-2 ${
-          dark
-            ? "border-neutral-800 bg-white/[0.02]"
-            : "border-neutral-200 bg-neutral-50"
-        }`}
-      >
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          {FLEET.map((t) => (
-            <Link
-              key={t.id}
-              to={`/fleet/${t.id}`}
-              className={`group/seg rounded-xl px-3 py-3 transition-colors ${
-                dark
-                  ? "hover:bg-white/[0.06]"
-                  : "hover:bg-white hover:shadow-sm"
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: t.tierColor }}
-                />
-                <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-800 dark:text-neutral-100">
-                  {t.tier}
-                </span>
-              </span>
-              <span className={`block text-xs mt-1 ${sub}`}>{t.name}</span>
-            </Link>
-          ))}
-        </div>
-        <div className={`flex items-center gap-2 px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-widest ${muted}`}>
-          <span>Lighter · Expedite</span>
-          <MoveRight size={13} />
-          <span>Heavier · Over-Dimensional</span>
-        </div>
-      </div>
-
       {/* Fleet grid */}
       <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {FLEET.map((t) => (
@@ -119,5 +80,3 @@ export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
     </div>
   );
 }
-
-export { FLEET_SCALE_LABELS };

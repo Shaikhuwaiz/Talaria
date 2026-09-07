@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import talariaLogo from "../image/logo.svg";
 import { FLEET } from "../utils/fleet";
-import SketchfabEmbed from "../components/SketchfabEmbed";
 import SketchfabViewer from "../components/SketchfabViewer";
 
 const STAT_ICONS = [Weight, Ruler, ArrowLeftRight, MoveHorizontal];
@@ -133,21 +132,13 @@ export default function FleetDetail() {
           </div>
 
           <div className="relative overflow-hidden rounded-2xl bg-[#06070a] shadow-2xl shadow-black/60">
-            {truck.id === "step-deck" ? (
-              <SketchfabViewer
-                src={truck.sketchfab}
-                autoSpin={2}
-                className="aspect-[4/3] w-full lg:h-[520px]"
-              />
-            ) : (
-              <SketchfabEmbed
-                src={truck.sketchfab}
-                title={`${truck.name} 3D model`}
-                className="aspect-[4/3] w-full lg:h-[520px]"
-              />
-            )}
+            <SketchfabViewer
+              src={truck.sketchfab}
+              autoSpin={0}
+              className="aspect-[4/3] w-full lg:h-[520px]"
+            />
             <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur">
-              Auto-rotating · Drag to orbit
+              Static view · Drag to orbit
             </span>
           </div>
         </div>

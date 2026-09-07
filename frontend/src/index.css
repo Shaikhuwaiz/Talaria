@@ -2,6 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Company logo loop (marquee) ─────────────────────────────────────── */
+@keyframes logo-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+/* ─── Shiny sweep along card borders ─────────────────────────────────── */
+.shiny-border {
+  position: relative;
+}
+
+.shiny-border::before {
+  content: "";
+  position: absolute;
+  inset: -150%;
+  z-index: 1;
+  opacity: 0;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 285deg,
+    rgba(255, 255, 255, 0.95) 320deg,
+    rgba(255, 255, 255, 0.25) 340deg,
+    transparent 360deg
+  );
+  transition: opacity 0.3s;
+}
+
+.shiny-border:hover::before {
+  opacity: 1;
+  animation: shiny-border-rotate 3.5s linear infinite;
+}
+
+.shiny-border::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 2;
+  border-radius: inherit;
+  background: #0a0a0a;
+}
+
+@keyframes shiny-border-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ─── Live cargo trucks (CARTO/OpenLayers markers) ──────────────────────── */
 .flight-plane {
   width: 34px;
