@@ -9,7 +9,8 @@ type Shipment = {
   origin: string;
   destination: string;
   status: string;
-  history?: { location: string }[];
+  expectedDelivery?: string;
+  history?: { location: string; status?: string; date?: string }[];
   originMode?: string;
 };
 
@@ -19,6 +20,10 @@ const toLiveFlight = (s: Shipment): LiveFlight => ({
   destination: s.destination,
   status: s.status,
   originIsWarehouse: s.originMode === "warehouse" || isWarehouseOrigin(s.origin),
+  deliveryDate: s.expectedDelivery,
+  departedAt:
+    s.history?.find((h) => !/created|label|book/i.test(h.status ?? ""))?.date ??
+    s.history?.[0]?.date,
   routeCoords: (s.history ?? [])
     .map((h) => resolveLocationCoords(h.location))
     .filter((c): c is [number, number] => Array.isArray(c) && c.length === 2),

@@ -25,13 +25,13 @@ export interface LiveProgress {
   p: number;
   arrived: boolean;
   returning: boolean;
+  closed?: boolean;
 }
 
 // Fraction-of-route thresholds that drive which stage is live/complete.
 export const TRANSIT_START = 0.15; // truck has left origin
 export const TRANSIT_END = 0.85; // truck nears destination
 export const OUT_FOR_DELIVERY_AT = 0.85;
-export const RETURN_DONE_AT = 0.1; // truck essentially back at the facility
 
 const liveEffectiveP = (live: LiveProgress) =>
   live.arrived
@@ -64,10 +64,6 @@ export const STAGE_META: Record<
 };
 
 // Overrides shown while the driver is on the return leg to the facility.
-export const RETURN_LABELS: Partial<Record<StageKey, { label: string; sub: string }>> = {
-  transit: { label: "In Transit Back to Facility", sub: "Returning to Talaria facility" },
-  delivered: { label: "Arrived at Warehouse", sub: "Ready for Reload" },
-};
 
 export const stageFor = (status: string): StageKey => {
   const s = status.toLowerCase();
@@ -98,15 +94,8 @@ export function stageState(
   // Live truck/plane progress overrides the static mapping so the timeline
   // moves in lockstep with the unit on the map.
   if (live) {
-    if (live.returning) {
-      // Carrier turned back to the facility: opening stages done, driver in
-      // transit. The terminal stage flips to "Arrived at Warehouse / Ready
-      // for Reload" once the truck is essentially back (p → 0).
-      if (idx === 2) return { completed: false, active: live.p > RETURN_DONE_AT };
-      if (idx === STAGE_ORDER.length - 1)
-        return { completed: live.p <= RETURN_DONE_AT, active: false };
-      return { completed: idx <= 1, active: false };
-    }
+    if (live.closed) return { completed: true, active: false };
+    if (live.returning) return { completed: true, active: false };
     const eff = liveEffectiveP(live);
     let done = false;
     switch (key) {
@@ -150,11 +139,8 @@ export function liveCompletedFor(
   status: string
 ): boolean {
   if (status.toLowerCase().includes("deliver")) return true;
-  if (live.returning) {
-    if (key === "created" || key === "departed") return true;
-    if (key === "delivered") return live.p <= RETURN_DONE_AT;
-    return false;
-  }
+  if (live.closed) return true;
+  if (live.returning) return true;
   const eff = liveEffectiveP(live);
   switch (key) {
     case "created":

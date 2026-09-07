@@ -26,6 +26,10 @@ const toLiveFlight = (s: Shipment): LiveFlight => ({
   destination: s.destination,
   status: s.status,
   originIsWarehouse: s.originMode === "warehouse" || isWarehouseOrigin(s.origin),
+  deliveryDate: s.expectedDelivery,
+  departedAt:
+    s.history?.find((h) => !/created|label|book/i.test(h.status ?? ""))?.date ??
+    s.history?.[0]?.date,
   routeCoords: (s.history ?? [])
     .map((h) => resolveLocationCoords(h.location))
     .filter((c): c is [number, number] => Array.isArray(c) && c.length === 2),
@@ -183,7 +187,7 @@ const getStatusClasses = (status: string) => {
     return (
       <div className="p-6 max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold mb-6 text-center text-white">
-          Shipments Dashboard
+          My Orders
         </h2>
         <div className="space-y-3 animate-pulse">
           {[...Array(ITEMS_PER_PAGE)].map((_, idx) => (
@@ -196,7 +200,7 @@ const getStatusClasses = (status: string) => {
 
   if (error) {
     return (
-      <div className="text-center py-10 text-red-500 text-lg font-semibold">
+      <div className="text-center py-10 text-red-400 text-lg font-semibold">
         Error: {error}
       </div>
     );
@@ -206,7 +210,7 @@ const getStatusClasses = (status: string) => {
     <div className="p-8 max-w-7xl mx-auto text-white">
       <FlightSimulationDriver flights={liveFlights} />
       <h2 className="text-4xl font-bold mb-6 text-center text-white">
-        Shipments Dashboard
+        My Orders
       </h2>
 
       <div className="mb-6 flex justify-between items-center">
@@ -229,7 +233,7 @@ const getStatusClasses = (status: string) => {
   </button>
 </div>
 
-      <div className="overflow-x-auto rounded-xl bg-neutral-900 border border-neutral-800">
+      <div className="overflow-x-auto rounded-xl bg-neutral-900 border border-neutral-800 text-white shadow-lg shadow-neutral-900/5">
         <table className="w-full text-left">
           <thead className="bg-white/5 text-neutral-400">
             <tr>
@@ -263,7 +267,13 @@ const getStatusClasses = (status: string) => {
 const live = getPlaneProgress(s.trackingId);
 const arrived = live?.arrived === true;
 const returning = live?.returning === true;
-const displayStatus = returning ? "Return" : arrived ? "Delivered" : s.status;
+const displayStatus = live?.closed
+  ? "Closed"
+  : returning
+    ? "Return"
+    : arrived
+      ? "Delivered"
+      : s.status;
 const displayLoc = live
   ? nearestLocationOf(live.lat, live.lng)
   : s.lastLocation;
@@ -275,7 +285,7 @@ const destLabel = conciseLocation(s.destination);
                   className={
                     idx % 2 === 0
                       ? "bg-white/[0.02] hover:bg-white/[0.05] transition"
-                      : "bg-transparent hover:bg-white/[0.05] transition"
+                      : "hover:bg-white/[0.05] transition"
                   }
                 >
                   <td className="p-4 font-semibold">{s.trackingId}</td>

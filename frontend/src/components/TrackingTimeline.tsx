@@ -3,7 +3,6 @@ import { Check, AlertTriangle } from "lucide-react";
 import {
   STAGE_ORDER,
   STAGE_META,
-  RETURN_LABELS,
   stageFor,
   stageState,
   liveCompletedFor,
@@ -140,14 +139,22 @@ export default function TrackingTimeline({
 }) {
   const t = T[theme];
 
-  const returning = liveProgress?.returning === true;
-  const statusLabel = returning ? "In Transit Back to Facility" : currentStatus;
+  const closed = liveProgress?.closed === true;
+  const delivered =
+    !liveProgress ||
+    liveProgress.arrived ||
+    liveProgress.returning ||
+    liveProgress.p >= 1;
+  const statusLabel = closed ? "Order Closed" : delivered ? "Delivered" : currentStatus;
   const stageLabel = (key: StageKey) => {
-    const base = STAGE_META[key];
-    if (returning && RETURN_LABELS[key]) {
-      return { ...base, ...RETURN_LABELS[key] };
+    if (closed && key === "delivered") {
+      return {
+        ...STAGE_META[key],
+        label: "Order Closed",
+        sub: "Order complete",
+      };
     }
-    return base;
+    return STAGE_META[key];
   };
 
   const groups = useMemo(() => {

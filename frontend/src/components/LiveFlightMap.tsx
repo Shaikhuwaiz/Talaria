@@ -25,6 +25,8 @@ export interface LiveFlight {
   status?: string;
   routeCoords?: [number, number][];
   originIsWarehouse?: boolean;
+  deliveryDate?: string;
+  departedAt?: string;
 }
 
 const CARTO_KEY = (import.meta.env.VITE_CARTO_KEY as string | undefined)?.trim();
@@ -40,10 +42,11 @@ const WORLD_EXTENT = [
   20037508.342789244,
 ];
 
-// Continental-U.S. focus window (Web Mercator bounds).
-const US_EXTENT = (() => {
-  const sw = fromLonLat([-125, 24.3]);
-  const ne = fromLonLat([-66.9, 50]);
+// Wider pan window so the user can drag up to Alaska and Canada
+// (western Aleutians → Newfoundland, southern Canada → the far north).
+const NA_EXTENT = (() => {
+  const sw = fromLonLat([-173, 24.3]);
+  const ne = fromLonLat([-52, 72]);
   return [sw[0], sw[1], ne[0], ne[1]] as number[];
 })();
 
@@ -71,7 +74,122 @@ interface PlaneState {
   rotation?: number;
   simSrc?: { from: LatLng; to: LatLng; via?: [number, number][] };
   waiting?: boolean;
+  dateMode?: DateSchedule;
+  closed?: boolean;
 }
+
+const DAY_MS = 86400000;
+const DEFAULT_TRIP_MS = 3 * DAY_MS;
+const OUTBOUND_MIN_MS = 60_000;
+const DELIVERY_TZ = "America/Chicago";
+
+const zonedOffsetMs = (tz: string, date: Date): number => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const num = (type: string) => {
+    const p = parts.find((x) => x.type === type);
+    return p ? parseInt(p.value, 10) : 0;
+  };
+  const asUTC = Date.UTC(
+    num("year"),
+    num("month") - 1,
+    num("day"),
+    num("hour") % 24,
+    num("minute"),
+    num("second")
+  );
+  return asUTC - date.getTime();
+};
+
+// Persisted fallback start so a page refresh doesn't reset the trip: the
+// truck keeps its place in the journey instead of jumping back to origin.
+const persistedStart = (id: string): number | null => {
+  try {
+    const raw = localStorage.getItem(`talaria.tripStart:${id}`);
+    if (!raw) return null;
+    const v = Number(raw);
+    return Number.isNaN(v) ? null : v;
+  } catch {
+    return null;
+  }
+};
+
+const persistStart = (id: string, v: number): void => {
+  try {
+    localStorage.setItem(`talaria.tripStart:${id}`, String(v));
+  } catch {
+    /* ignore */
+  }
+};
+
+export interface DateSchedule {
+  startT: number;
+  arriveT: number;
+  returnStartT: number;
+  closeT: number;
+}
+
+// Date-scheduled journey keyed to the promised delivery day (America/Chicago).
+// Travels from startT → arriveT (start of the delivery day), marks Delivered at
+// arriveT, returns to the warehouse immediately taking the same time as the
+// outbound leg, then closes at closeT — the truck and route line disappear.
+// If the order has no promised date (legacy rows), it runs forward-only and
+// delivers in DEFAULT_TRIP_MS without ever returning, so nothing loops.
+export const makeDateSchedule = (
+  deliveryDate?: string,
+  departedAt?: string,
+  id?: string
+): DateSchedule => {
+  const real = deliveryDate ? new Date(deliveryDate) : null;
+  const haveReal = !!real && !Number.isNaN(real.getTime());
+
+  const departed = departedAt ? new Date(departedAt).getTime() : NaN;
+  const persisted = id ? persistedStart(id) : null;
+
+  let startT: number;
+  if (!Number.isNaN(departed)) {
+    startT = departed;
+  } else if (persisted != null) {
+    startT = persisted;
+  } else {
+    startT = Date.now();
+    if (id) persistStart(id, startT);
+  }
+
+  if (haveReal) {
+    const e = real as Date;
+    const y = e.getFullYear();
+    const m = e.getMonth();
+    const d = e.getDate();
+    const offset = zonedOffsetMs(DELIVERY_TZ, new Date(y, m, d, 12));
+    const arriveT = Date.UTC(y, m, d, 0, 0, 0, 0) + offset;
+    if (startT >= arriveT) startT = arriveT - Math.max(60_000, OUTBOUND_MIN_MS);
+    const outboundDur = arriveT - startT;
+    return {
+      startT,
+      arriveT,
+      returnStartT: arriveT,
+      closeT: arriveT + outboundDur,
+    };
+  }
+
+  // No promised date: forward-only, arrive in DEFAULT_TRIP_MS, never return.
+  const arriveT = startT + DEFAULT_TRIP_MS;
+  return {
+    startT,
+    arriveT,
+    returnStartT: Number.MAX_SAFE_INTEGER,
+    closeT: Number.MAX_SAFE_INTEGER,
+  };
+};
 
 const makeTruckImg = () => {
   const img = document.createElement("img");
@@ -134,6 +252,7 @@ export default function LiveFlightMap({
   const pinOverlaysRef = useRef<Map<string, Overlay>>(new Map());
   const flightsRef = useRef<LiveFlight[]>([]);
   const onProgressRef = useRef(onProgress);
+  const fittedKeyRef = useRef<string | null>(null);
   flightsRef.current = flights;
   onProgressRef.current = onProgress;
 
@@ -169,6 +288,14 @@ export default function LiveFlightMap({
     let fitExtent: [number, number, number, number] | null = null;
 
     for (const flight of flightsRef.current) {
+      // Closed orders are done: remove the truck and skip the route line/pins.
+      const existing = flightStateRef.current.get(flight.shipmentId);
+      if (existing?.closed) {
+        const el = existing.overlay.getElement();
+        if (el) el.style.display = "none";
+        continue;
+      }
+
       const origin = resolveLocationCoords(flight.origin);
       const dest = resolveLocationCoords(flight.destination);
       if (!origin || !dest) continue;
@@ -253,6 +380,7 @@ export default function LiveFlightMap({
           holdStart: 0,
           simSrc: { from, to: toRaw, via: flight.routeCoords },
           waiting: !ready,
+          dateMode: makeDateSchedule(flight.deliveryDate, flight.departedAt, flight.shipmentId),
         });
       }
 
@@ -296,12 +424,19 @@ export default function LiveFlightMap({
 
     // When focused on specific shipments, zoom in on the full route
     // (origin + waypoints + destination) so nothing floats off-frame.
+    // Fit only when the route extent changes so repeated syncs (e.g. the
+    // tracking page re-rendering on a progress tick) don't restart the
+    // zoom animation over and over.
     if (autoFit && fitExtent) {
-      map.getView().fit(fitExtent, {
-        padding: [90, 90, 90, 90],
-        duration: 700,
-        maxZoom: 9,
-      });
+      const key = fitExtent.map((v) => v.toFixed(3)).join(",");
+      if (fittedKeyRef.current !== key) {
+        fittedKeyRef.current = key;
+        map.getView().fit(fitExtent, {
+          padding: [90, 90, 90, 90],
+          duration: 700,
+          maxZoom: 9,
+        });
+      }
     }
   };
 
@@ -324,8 +459,8 @@ export default function LiveFlightMap({
       ],
       view: new View({
         center: fromLonLat([-97, 38]),
-        zoom: 4.7,
-        minZoom: 4,
+        zoom: 4.1,
+        minZoom: 3,
         maxZoom: 18,
         extent: WORLD_EXTENT,
         enableRotation: false,
@@ -340,21 +475,21 @@ export default function LiveFlightMap({
       const view = map.getView();
       const c = view.getCenter();
       if (!c) return;
-      const padX = (US_EXTENT[2] - US_EXTENT[0]) * 0.16;
-      const padY = (US_EXTENT[3] - US_EXTENT[1]) * 0.16;
+      const padX = (NA_EXTENT[2] - NA_EXTENT[0]) * 0.16;
+      const padY = (NA_EXTENT[3] - NA_EXTENT[1]) * 0.16;
       const cx = c[0];
       const cy = c[1];
       if (
-        cx < US_EXTENT[0] - padX ||
-        cx > US_EXTENT[2] + padX ||
-        cy < US_EXTENT[1] - padY ||
-        cy > US_EXTENT[3] + padY
+        cx < NA_EXTENT[0] - padX ||
+        cx > NA_EXTENT[2] + padX ||
+        cy < NA_EXTENT[1] - padY ||
+        cy > NA_EXTENT[3] + padY
       ) {
         animating = true;
         view.animate({
           center: [
-            Math.min(Math.max(cx, US_EXTENT[0]), US_EXTENT[2]),
-            Math.min(Math.max(cy, US_EXTENT[1]), US_EXTENT[3]),
+            Math.min(Math.max(cx, NA_EXTENT[0]), NA_EXTENT[2]),
+            Math.min(Math.max(cy, NA_EXTENT[1]), NA_EXTENT[3]),
           ],
           duration: 380,
           easing: easeOut,
@@ -371,6 +506,7 @@ export default function LiveFlightMap({
       map.setTarget(undefined);
       mapRef.current = null;
       vectorSourceRef.current = null;
+      fittedKeyRef.current = null;
       flightStateRef.current.clear();
       pinOverlaysRef.current.clear();
     };
@@ -391,7 +527,7 @@ export default function LiveFlightMap({
       const dt = Math.min(now - last, 100);
       last = now;
 
-      const out: Record<string, { p: number; arrived: boolean; returning: boolean; lat: number; lng: number }> = {};
+      const out: Record<string, { p: number; arrived: boolean; returning: boolean; closed: boolean; lat: number; lng: number }> = {};
       let resolvedWaiting = false;
 
       for (const [id, fs] of flightStateRef.current.entries()) {
@@ -418,7 +554,40 @@ export default function LiveFlightMap({
           }
         }
 
-        if (fs.phase === "forward") {
+        if (fs.dateMode) {
+          const nowAt = Date.now();
+          if (nowAt >= fs.dateMode.closeT) {
+            fs.progress = 0;
+            fs.phase = "arrived";
+            fs.closed = true;
+          } else if (nowAt >= fs.dateMode.returnStartT) {
+            fs.progress = Math.max(
+              0,
+              Math.min(
+                1,
+                (nowAt - fs.dateMode.returnStartT) /
+                  (fs.dateMode.closeT - fs.dateMode.returnStartT)
+              )
+            );
+            fs.phase = "return";
+            fs.closed = false;
+          } else if (nowAt >= fs.dateMode.arriveT) {
+            fs.progress = 1;
+            fs.phase = "arrived";
+            fs.closed = false;
+          } else {
+            fs.progress = Math.max(
+              0,
+              Math.min(
+                1,
+                (nowAt - fs.dateMode.startT) /
+                  (fs.dateMode.arriveT - fs.dateMode.startT)
+              )
+            );
+            fs.phase = "forward";
+            fs.closed = false;
+          }
+        } else if (fs.phase === "forward") {
           fs.progress = Math.min(1, fs.progress + dt / fs.duration);
           if (fs.progress >= 1) {
             fs.phase = "arrived";
@@ -437,6 +606,22 @@ export default function LiveFlightMap({
           }
         }
 
+        const overlayEl = fs.overlay.getElement();
+        if (fs.closed) {
+          if (overlayEl) overlayEl.style.display = "none";
+          const lonlat = toLonLat([fs.mpts[0][0], fs.mpts[0][1]]);
+          out[id] = {
+            p: 0,
+            arrived: true,
+            returning: false,
+            closed: true,
+            lat: lonlat[1],
+            lng: lonlat[0],
+          };
+          continue;
+        }
+        if (overlayEl) overlayEl.style.display = "";
+
         const t = Math.max(0, Math.min(1, fs.progress)) * fs.total;
         let i = 0;
         while (i < fs.cum.length - 1 && t > fs.cum[i + 1]) i++;
@@ -453,8 +638,10 @@ export default function LiveFlightMap({
 
         // Aim at a point ~12 km ahead (behind on the return leg) so the
         // truck faces the true travel direction instead of snapping to
-        // individual (noisy) road vertices, and ease the rotation so it
-        // never wobbles left/right frame to frame.
+        // individual (noisy) road vertices. Rotation is then limited to a
+        // fixed angular speed so the truck sweeps smoothly into turns and
+        // never flicks around like a compass needle (e.g. the u-turn when
+        // the return leg begins).
         const lookT =
           fs.phase === "return" ? t - LOOKAHEAD_METERS : t + LOOKAHEAD_METERS;
         const tc = Math.max(0, Math.min(fs.total, lookT));
@@ -466,7 +653,10 @@ export default function LiveFlightMap({
         const targetRotation = heading - 90;
         const prevRotation = fs.rotation ?? targetRotation;
         const diff = ((targetRotation - prevRotation + 540) % 360) - 180;
-        fs.rotation = prevRotation + diff * Math.min(1, dt / 180);
+        const maxDegPerSec = 70;
+        const maxStep = (maxDegPerSec * dt) / 1000;
+        const step = Math.max(-maxStep, Math.min(maxStep, diff));
+        fs.rotation = (fs.rotation ?? prevRotation) + step;
         fs.img.style.transform = `rotate(${fs.rotation}deg)`;
 
         const lonlat = toLonLat([px, py]);
@@ -474,6 +664,7 @@ export default function LiveFlightMap({
           p: fs.progress,
           arrived: fs.phase === "arrived",
           returning: fs.phase === "return",
+          closed: fs.closed === true,
           lat: lonlat[1],
           lng: lonlat[0],
         };
@@ -482,7 +673,15 @@ export default function LiveFlightMap({
       if (now - lastEmit >= 500) {
         lastEmit = now;
         for (const [id, v] of Object.entries(out)) {
-          setPlaneProgress(id, v.p, v.arrived, v.returning, v.lat, v.lng);
+          setPlaneProgress(
+            id,
+            v.p,
+            v.arrived,
+            v.returning,
+            v.lat,
+            v.lng,
+            v.closed
+          );
         }
         onProgressRef.current?.(out);
       }

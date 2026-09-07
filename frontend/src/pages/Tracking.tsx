@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CloudSnow } from "lucide-react";
 import LiveFlightMap, { type LiveFlight } from "../components/LiveFlightMap";
 import TrackingTimeline from "../components/TrackingTimeline";
 import { resolveLocationCoords } from "../utils/shipmentCoords";
@@ -29,6 +30,7 @@ export default function Tracking() {
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [weatherDelay, setWeatherDelay] = useState("");
   const [, setTick] = useState(0);
 
   // Re-render on an interval so the timeline stays in sync with the live
@@ -40,6 +42,72 @@ export default function Tracking() {
   }, [shipment]);
 
   const live = shipment ? getPlaneProgress(shipment.trackingId) : undefined;
+
+  // Weather-based delay notice (free Open-Meteo, no API key): if severe
+  // weather is forecast near the destination on the promised delivery day,
+  // surface a delay message.
+  useEffect(() => {
+    if (!shipment) {
+      setWeatherDelay("");
+      return;
+    }
+    const dest = resolveLocationCoords(shipment.destination);
+    const target = new Date(shipment.expectedDelivery);
+    if (
+      !dest ||
+      Number.isNaN(target.getTime()) ||
+      target.getTime() < Date.now() - 86400000
+    ) {
+      setWeatherDelay("");
+      return;
+    }
+
+    const ctrl = new AbortController();
+    const url = new URL("https://api.open-meteo.com/v1/forecast");
+    url.searchParams.set("latitude", String(dest[0]));
+    url.searchParams.set("longitude", String(dest[1]));
+    url.searchParams.set("daily", "weathercode,snowfall_sum,precipitation_sum");
+    url.searchParams.set("forecast_days", "16");
+    url.searchParams.set("timezone", "America/Chicago");
+
+    fetch(url.toString(), { signal: ctrl.signal })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("bad status"))))
+      .then((d: any) => {
+        const days: string[] = d?.daily?.time ?? [];
+        const codes: number[] = d?.daily?.weathercode ?? [];
+        const snow: number[] = d?.daily?.snowfall_sum ?? [];
+        const dateStr = `${target.getFullYear()}-${String(
+          target.getMonth() + 1
+        ).padStart(2, "0")}-${String(target.getDate()).padStart(2, "0")}`;
+        const i = days.findIndex((x) => x === dateStr);
+        if (i < 0) {
+          setWeatherDelay("");
+          return;
+        }
+        const code = codes[i];
+        const snowfall = snow[i] ?? 0;
+        if (code < 71 && code !== 65 && code !== 67 && code < 95 && snowfall <= 5) {
+          setWeatherDelay("");
+          return;
+        }
+        const cause =
+          code >= 95
+            ? "thunderstorms"
+            : code >= 71 || snowfall > 5
+              ? "heavy snow"
+              : "heavy rain";
+        const when = new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "numeric",
+        }).format(target);
+        setWeatherDelay(
+          `Possible delay: ${cause} forecast near ${shipment.destination} on ${when} — delivery may be affected.`
+        );
+      })
+      .catch(() => setWeatherDelay(""));
+
+    return () => ctrl.abort();
+  }, [shipment]);
 
   const getDotRingClasses = (status: string) => {
     switch (status) {
@@ -138,7 +206,7 @@ export default function Tracking() {
 
       {/* Shipment Details */}
       {shipment && (
-        <div className="bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
+        <div className="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 text-white shadow-lg shadow-neutral-900/5">
           <h3 className="text-xl font-bold mb-2">{shipment.trackingId}</h3>
 
           <p className="text-neutral-400 mb-1">
@@ -165,6 +233,13 @@ export default function Tracking() {
             {new Date(shipment.expectedDelivery).toLocaleDateString()}
           </p>
 
+          {weatherDelay && (
+            <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-amber-300">
+              <CloudSnow size={16} className="mt-0.5 shrink-0" />
+              <p className="text-sm">{weatherDelay}</p>
+            </div>
+          )}
+
           <div className="w-full mb-6 rounded-xl overflow-hidden border border-neutral-800">
             <LiveFlightMap
               autoFit
@@ -177,6 +252,12 @@ export default function Tracking() {
                   originIsWarehouse:
                     shipment.originMode === "warehouse" ||
                     isWarehouseOrigin(shipment.origin),
+                  deliveryDate: shipment.expectedDelivery,
+                  departedAt:
+                    shipment.history?.find(
+                      (h) => !/created|label|book/i.test(h.status ?? "")
+                    )?.date ??
+                    shipment.history?.[0]?.date,
                   routeCoords: (shipment.history ?? [])
                     .map((h) => resolveLocationCoords(h.location))
                     .filter(
@@ -201,6 +282,7 @@ export default function Tracking() {
                     p: live.p,
                     arrived: live.arrived,
                     returning: live.returning,
+                    closed: live.closed,
                   }
                 : undefined
             }

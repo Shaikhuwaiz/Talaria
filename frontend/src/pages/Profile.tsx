@@ -80,11 +80,11 @@ export default function Profile() {
      UI OUTPUT
   --------------------------------------------- */
   return (
-    <div className="flex-1 min-h-screen flex justify-center items-center overflow-hidden">
-      <div className="relative bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl p-10 w-full max-w-3xl text-white">
-        
+    <div className="flex-1 min-h-screen flex justify-center items-center overflow-hidden p-6">
+      <div className="relative bg-neutral-950/70 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-10 w-full max-w-3xl text-white">
+
         {/* HEADER */}
-        <div className="flex items-center justify-between mb-6 border-b border-white/20 pb-4">
+        <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
           <h2 className="text-3xl font-bold flex items-center gap-2">
             <User size={26} /> Profile
           </h2>
@@ -98,17 +98,17 @@ export default function Profile() {
 
         {/* AVATAR + DETAILS */}
         <div className="flex flex-col md:flex-row items-center gap-8">
-          
+
           {/* AVATAR DISPLAY */}
           <div className="flex flex-col items-center text-center">
             <img
               src={user.avatar}
               alt="avatar"
-              className="w-28 h-28 rounded-full shadow-lg border border-white/30 object-cover mb-3"
+              className="w-28 h-28 rounded-full shadow-lg border border-white/20 object-cover mb-3"
             />
             <h3 className="text-xl font-semibold">{user.name}</h3>
-            <p className="text-gray-300 text-sm">{user.role}</p>
-            <p className="text-gray-400 text-xs mt-1">
+            <p className="text-neutral-400 text-sm">{user.role}</p>
+            <p className="text-neutral-500 text-xs mt-1">
               Joined {new Date(user.joined).toLocaleDateString()}
             </p>
           </div>
@@ -116,11 +116,11 @@ export default function Profile() {
           {/* FORM FIELDS */}
           <form
             onSubmit={handleSave}
-            className="flex-1 space-y-5 bg-white/5 p-6 rounded-xl border border-white/10 shadow-inner"
+            className="flex-1 space-y-5 bg-white/5 p-6 rounded-xl border border-white/10"
           >
             {/* EMAIL */}
             <div>
-              <label className="flex items-center gap-2 text-sm text-gray-300 mb-1">
+              <label className="flex items-center gap-2 text-sm text-neutral-400 mb-1">
                 <Mail size={16} /> Email
               </label>
               <input
@@ -133,14 +133,14 @@ export default function Profile() {
                 className={`w-full p-3 rounded-lg border ${
                   editing
                     ? "border-yellow-400 bg-white/10 focus:ring-2 focus:ring-yellow-400"
-                    : "border-transparent bg-white/10"
-                } text-white outline-none`}
+                    : "border-white/10 bg-white/5"
+                } text-white outline-none disabled:opacity-80`}
               />
             </div>
 
             {/* FULL NAME */}
             <div>
-              <label className="flex items-center gap-2 text-sm text-gray-300 mb-1">
+              <label className="flex items-center gap-2 text-sm text-neutral-400 mb-1">
                 <User size={16} /> Full Name
               </label>
               <input
@@ -153,8 +153,8 @@ export default function Profile() {
                 className={`w-full p-3 rounded-lg border ${
                   editing
                     ? "border-yellow-400 bg-white/10 focus:ring-2 focus:ring-yellow-400"
-                    : "border-transparent bg-white/10"
-                } text-white outline-none`}
+                    : "border-white/10 bg-white/5"
+                } text-white outline-none disabled:opacity-80`}
               />
             </div>
 
@@ -162,7 +162,7 @@ export default function Profile() {
             {editing && (
               <>
                 <div>
-                  <label className="flex items-center gap-2 text-sm text-gray-300 mb-1">
+                  <label className="flex items-center gap-2 text-sm text-neutral-400 mb-1">
                     <Lock size={16} /> New Password
                   </label>
                   <input
@@ -175,7 +175,7 @@ export default function Profile() {
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-2 text-sm text-gray-300 mb-1">
+                  <label className="flex items-center gap-2 text-sm text-neutral-400 mb-1">
                     <Lock size={16} /> Confirm Password
                   </label>
                   <input
@@ -192,7 +192,7 @@ export default function Profile() {
             {/* STATUS MESSAGE */}
             {statusMsg && (
               <p
-                className={`text-sm ${
+                className={`text-sm font-medium ${
                   statusMsg.startsWith("✅")
                     ? "text-green-400"
                     : "text-red-400"
@@ -217,7 +217,7 @@ export default function Profile() {
         </div>
 
         {/* FOOTER */}
-        <div className="mt-10 pt-4 border-t border-white/20 text-gray-300 flex items-center justify-between">
+        <div className="mt-10 pt-4 border-t border-white/10 text-neutral-400 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Settings size={18} />
             <span className="text-sm">Account Settings</span>
@@ -227,7 +227,7 @@ export default function Profile() {
               localStorage.clear();
               window.location.href = "/";
             }}
-            className="text-red-400 hover:text-red-500 text-sm"
+            className="text-red-400 hover:text-red-500 text-sm font-medium"
           >
             Logout
           </button>

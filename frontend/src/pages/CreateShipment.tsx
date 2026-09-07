@@ -104,6 +104,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface AddressForm {
   state: string;
+  city: string;
   fullName: string;
   contactName: string;
   email: string;
@@ -113,6 +114,7 @@ interface AddressForm {
 
 const emptyAddress = (): AddressForm => ({
   state: "California",
+  city: "",
   fullName: "",
   contactName: "",
   email: "",
@@ -267,103 +269,86 @@ function SectionCard({
 
 interface AddressSuggestion {
   street: string;
+  city: string;
   state: string;
   label: string;
+  kind: "city" | "address";
 }
 
-const WAREHOUSE_SUGGESTIONS: AddressSuggestion[] = WAREHOUSES.map((w) => ({
-  street: w.street,
-  state: w.state,
-  label: `${w.street}, ${w.city}, ${w.state}`,
-}));
+const CITIES_BY_STATE: Record<string, string[]> = {
+  Alabama: ["Birmingham", "Montgomery", "Huntsville"],
+  Alaska: ["Anchorage", "Fairbanks", "Juneau"],
+  Arizona: ["Phoenix", "Tucson", "Mesa"],
+  Arkansas: ["Little Rock", "Fayetteville", "Fort Smith"],
+  California: ["Los Angeles", "San Francisco", "San Diego"],
+  Colorado: ["Denver", "Colorado Springs", "Boulder"],
+  Connecticut: ["Hartford", "New Haven", "Stamford"],
+  Delaware: ["Wilmington", "Dover", "Newark"],
+  "District of Columbia": ["Washington"],
+  Florida: ["Miami", "Orlando", "Tampa"],
+  Georgia: ["Atlanta", "Savannah", "Augusta"],
+  Hawaii: ["Honolulu", "Hilo", "Kahului"],
+  Idaho: ["Boise", "Coeur d'Alene", "Idaho Falls"],
+  Illinois: ["Chicago", "Springfield", "Rockford"],
+  Indiana: ["Indianapolis", "Fort Wayne", "Evansville"],
+  Iowa: ["Des Moines", "Cedar Rapids", "Davenport"],
+  Kansas: ["Wichita", "Kansas City", "Topeka"],
+  Kentucky: ["Louisville", "Lexington", "Bowling Green"],
+  Louisiana: ["New Orleans", "Baton Rouge", "Shreveport"],
+  Maine: ["Portland", "Bangor", "Lewiston"],
+  Maryland: ["Baltimore", "Annapolis", "Rockville"],
+  Massachusetts: ["Boston", "Worcester", "Springfield"],
+  Michigan: ["Detroit", "Grand Rapids", "Lansing"],
+  Minnesota: ["Minneapolis", "St. Paul", "Duluth"],
+  Mississippi: ["Jackson", "Gulfport", "Hattiesburg"],
+  Missouri: ["St. Louis", "Kansas City", "Springfield"],
+  Montana: ["Billings", "Missoula", "Great Falls"],
+  Nebraska: ["Omaha", "Lincoln", "Grand Island"],
+  Nevada: ["Las Vegas", "Reno", "Henderson"],
+  "New Hampshire": ["Manchester", "Nashua", "Concord"],
+  "New Jersey": ["Newark", "Jersey City", "Trenton"],
+  "New Mexico": ["Albuquerque", "Santa Fe", "Las Cruces"],
+  "New York": ["New York", "Buffalo", "Rochester"],
+  "North Carolina": ["Charlotte", "Raleigh", "Greensboro"],
+  "North Dakota": ["Fargo", "Bismarck", "Grand Forks"],
+  Ohio: ["Columbus", "Cleveland", "Cincinnati"],
+  Oklahoma: ["Oklahoma City", "Tulsa", "Norman"],
+  Oregon: ["Portland", "Eugene", "Salem"],
+  Pennsylvania: ["Philadelphia", "Pittsburgh", "Harrisburg"],
+  "Rhode Island": ["Providence", "Warwick", "Cranston"],
+  "South Carolina": ["Charleston", "Columbia", "Greenville"],
+  "South Dakota": ["Sioux Falls", "Rapid City", "Aberdeen"],
+  Tennessee: ["Nashville", "Memphis", "Knoxville"],
+  Texas: ["Houston", "Dallas", "Austin"],
+  Utah: ["Salt Lake City", "Provo", "Ogden"],
+  Vermont: ["Burlington", "Montpelier", "Rutland"],
+  Virginia: ["Virginia Beach", "Richmond", "Arlington"],
+  Washington: ["Seattle", "Spokane", "Tacoma"],
+  "West Virginia": ["Charleston", "Huntington", "Morgantown"],
+  Wisconsin: ["Milwaukee", "Madison", "Green Bay"],
+  Wyoming: ["Cheyenne", "Casper", "Laramie"],
+};
 
-const SAMPLE_SUGGESTIONS: AddressSuggestion[] = [
-  { street: "1 Tesla Rd", state: "Texas", label: "1 Tesla Rd, Austin, Texas" },
-  { street: "221 W 6th St", state: "Texas", label: "221 W 6th St, Austin, Texas" },
-  { street: "500 Terry A Francois Blvd", state: "California", label: "500 Terry A Francois Blvd, San Francisco, California" },
-  { street: "2211 N First St", state: "California", label: "2211 N First St, San Jose, California" },
-  { street: "1200 S Chapman St", state: "California", label: "1200 S Chapman St, Fullerton, California" },
-  { street: "233 S Wacker Dr", state: "Illinois", label: "233 S Wacker Dr, Chicago, Illinois" },
-  { street: "620 Atlantic Ave", state: "New York", label: "620 Atlantic Ave, Brooklyn, New York" },
-  { street: "303 Peachtree St NE", state: "Georgia", label: "303 Peachtree St NE, Atlanta, Georgia" },
-  { street: "1000 NW 12th Ave", state: "Florida", label: "1000 NW 12th Ave, Miami, Florida" },
-  { street: "101 N Monroe St", state: "Washington", label: "101 N Monroe St, Spokane, Washington" },
-  { street: "611 N 4th St", state: "Washington", label: "611 N 4th St, Tacoma, Washington" },
-  { street: "6750 US-90", state: "Alabama", label: "6750 US-90, Mobile, Alabama" },
-  { street: "1006 S Bragaw St", state: "Alaska", label: "1006 S Bragaw St, Anchorage, Alaska" },
-  { street: "2550 S 20th Ave", state: "Arizona", label: "2550 S 20th Ave, Phoenix, Arizona" },
-  { street: "2501 S Shackleford Rd", state: "Arkansas", label: "2501 S Shackleford Rd, Little Rock, Arkansas" },
-  { street: "7300 E Smith Rd", state: "Colorado", label: "7300 E Smith Rd, Denver, Colorado" },
-  { street: "1000 Slater Rd", state: "Connecticut", label: "1000 Slater Rd, New Britain, Connecticut" },
-  { street: "1201 M St NE", state: "District of Columbia", label: "1201 M St NE, Washington, District of Columbia" },
-  { street: "400 Rodgers Blvd", state: "Hawaii", label: "400 Rodgers Blvd, Honolulu, Hawaii" },
-  { street: "2300 S Silverstone Way", state: "Idaho", label: "2300 S Silverstone Way, Meridian, Idaho" },
-  { street: "410 N Franklin Rd", state: "Indiana", label: "410 N Franklin Rd, Indianapolis, Indiana" },
-  { street: "6425 N Washington Ave", state: "Iowa", label: "6425 N Washington Ave, Des Moines, Iowa" },
-  { street: "2300 E 2nd St", state: "Kansas", label: "2300 E 2nd St, Wichita, Kansas" },
-  { street: "1321 S 4th St", state: "Kentucky", label: "1321 S 4th St, Louisville, Kentucky" },
-  { street: "1601 Jahncke Ave", state: "Louisiana", label: "1601 Jahncke Ave, New Orleans, Louisiana" },
-  { street: "405 Perry Rd", state: "Maine", label: "405 Perry Rd, Bangor, Maine" },
-  { street: "7000 Boston Blvd", state: "Maryland", label: "7000 Boston Blvd, Springfield, Maryland" },
-  { street: "38 Commerce Way", state: "Massachusetts", label: "38 Commerce Way, Woburn, Massachusetts" },
-  { street: "2441 Lesher St", state: "Michigan", label: "2441 Lesher St, Detroit, Michigan" },
-  { street: "500 5th Ave S", state: "Minnesota", label: "500 5th Ave S, Minneapolis, Minnesota" },
-  { street: "2000 Hwy 29 N", state: "Mississippi", label: "2000 Hwy 29 N, Hattiesburg, Mississippi" },
-  { street: "1600 N Universal Ave", state: "Missouri", label: "1600 N Universal Ave, Kansas City, Missouri" },
-  { street: "2700 Airport Way", state: "Montana", label: "2700 Airport Way, Billings, Montana" },
-  { street: "9939 S 148th St", state: "Nebraska", label: "9939 S 148th St, Omaha, Nebraska" },
-  { street: "6350 Neil Rd", state: "Nevada", label: "6350 Neil Rd, Reno, Nevada" },
-  { street: "5 Merrimack St", state: "New Hampshire", label: "5 Merrimack St, Nashua, New Hampshire" },
-  { street: "340 Sylvan Ave", state: "New Jersey", label: "340 Sylvan Ave, Englewood Cliffs, New Jersey" },
-  { street: "7900 Osuna Rd NE", state: "New Mexico", label: "7900 Osuna Rd NE, Albuquerque, New Mexico" },
-  { street: "11115 S Tryon St", state: "North Carolina", label: "11115 S Tryon St, Charlotte, North Carolina" },
-  { street: "1795 43rd St S", state: "North Dakota", label: "1795 43rd St S, Fargo, North Dakota" },
-  { street: "31031 Clark Rd", state: "Ohio", label: "31031 Clark Rd, Avon, Ohio" },
-  { street: "8000 S Sheridan Rd", state: "Oklahoma", label: "8000 S Sheridan Rd, Tulsa, Oklahoma" },
-  { street: "855 NE 25th Ave", state: "Oregon", label: "855 NE 25th Ave, Portland, Oregon" },
-  { street: "300 S 11th St", state: "Pennsylvania", label: "300 S 11th St, Philadelphia, Pennsylvania" },
-  { street: "101 Dupont Dr", state: "Rhode Island", label: "101 Dupont Dr, Providence, Rhode Island" },
-  { street: "2000 W Main St", state: "South Carolina", label: "2000 W Main St, Spartanburg, South Carolina" },
-  { street: "3001 N Haines Ave", state: "South Dakota", label: "3001 N Haines Ave, Rapid City, South Dakota" },
-  { street: "2900 Airways Blvd", state: "Tennessee", label: "2900 Airways Blvd, Memphis, Tennessee" },
-  { street: "900 W 2100 S", state: "Utah", label: "900 W 2100 S, Salt Lake City, Utah" },
-  { street: "75 Swift St", state: "Vermont", label: "75 Swift St, South Burlington, Vermont" },
-  { street: "7000 Infrastructure Way", state: "Virginia", label: "7000 Infrastructure Way, Richmond, Virginia" },
-  { street: "3000 Piedmont Rd", state: "West Virginia", label: "3000 Piedmont Rd, Charleston, West Virginia" },
-  { street: "8615 W Heather Ave", state: "Wisconsin", label: "8615 W Heather Ave, Milwaukee, Wisconsin" },
-  { street: "2797 E Yellowsky Dr", state: "Wyoming", label: "2797 E Yellowsky Dr, Cheyenne, Wyoming" },
-];
-
-const ADDRESS_SUGGESTIONS: AddressSuggestion[] = [
-  ...WAREHOUSE_SUGGESTIONS,
-  ...SAMPLE_SUGGESTIONS,
-];
-
-function StreetAddressField({
+function CityField({
   value,
   onChange,
   onSelect,
-  suggestions,
   state,
   error,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSelect: (s: AddressSuggestion) => void;
-  suggestions: AddressSuggestion[];
   state: string;
   error?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  const [matches, setMatches] = useState<AddressSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const q = value.trim().toLowerCase();
-  const inState = state.toLowerCase();
-  const matches = suggestions
-    .filter((s) => s.state.toLowerCase() === inState)
-    .filter((s) => s.label.toLowerCase().includes(q))
-    .slice(0, 8);
+  const q = value.trim();
 
   useEffect(() => {
     setHighlight(0);
@@ -378,6 +363,277 @@ function StreetAddressField({
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
+
+  useEffect(() => {
+    const curated = (CITIES_BY_STATE[state] ?? []).map<AddressSuggestion>(
+      (c) => ({
+        street: `${c}, ${state}`,
+        city: c,
+        state,
+        label: `${c}, ${state}`,
+        kind: "city" as const,
+      })
+    );
+
+    const ctrl = new AbortController();
+    setLoading(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const url = new URL(
+          "https://api.geoapify.com/v1/geocode/autocomplete"
+        );
+        url.searchParams.set("text", q ? `${q}, ${state}` : state);
+        url.searchParams.set("apiKey", import.meta.env.VITE_GEOAPIFY_KEY);
+        url.searchParams.set("limit", "8");
+        url.searchParams.set("type", "city");
+        url.searchParams.set("filter", "countrycode:us");
+
+        const res = await fetch(url.toString(), { signal: ctrl.signal });
+        const data = await res.json();
+        const stateLower = state.toLowerCase();
+        const live: AddressSuggestion[] = (Array.isArray(data.features)
+          ? (data.features as any[])
+          : [])
+          .map((f) => {
+            const p = f.properties ?? {};
+            return {
+              street: `${p.city || p.name || ""}, ${p.state || state}`,
+              city: p.city || p.name || "",
+              state: p.state || state,
+              label: p.city || p.name || p.formatted || p.address_line2 || "",
+              kind: "city" as const,
+            };
+          })
+          .filter(
+            (s) => s.city && (!state || s.state.toLowerCase() === stateLower)
+          );
+        const seen = new Set(curated.map((s) => s.city.toLowerCase()));
+        const merged = [
+          ...curated,
+          ...live.filter((s) => {
+            const k = s.city.toLowerCase();
+            if (seen.has(k)) return false;
+            seen.add(k);
+            return true;
+          }),
+        ];
+        setMatches(merged.length ? merged : curated);
+      } catch {
+        if (!ctrl.signal.aborted) setMatches(curated);
+      } finally {
+        if (!ctrl.signal.aborted) setLoading(false);
+      }
+    }, q.length === 0 ? 200 : 300);
+
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [q, state]);
+
+  const pick = (s: AddressSuggestion) => {
+    onChange(s.city);
+    onSelect(s);
+    setOpen(false);
+  };
+
+  return (
+    <Field label="City / Town" required error={error}>
+      <div ref={rootRef} className="relative">
+        <input
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setOpen(true);
+              if (matches.length > 0)
+                setHighlight((h) => Math.min(h + 1, matches.length - 1));
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setOpen(true);
+              if (matches.length > 0)
+                setHighlight((h) => Math.max(h - 1, 0));
+            } else if (e.key === "Enter") {
+              if (open && matches[highlight]) {
+                e.preventDefault();
+                pick(matches[highlight]);
+              }
+            } else if (e.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+          placeholder="Search cities, e.g. Des Moines"
+          className={`${fieldInput(!!error)} pr-10`}
+        />
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label="Toggle city suggestions"
+          tabIndex={-1}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setOpen((o) => !o)}
+          className="absolute right-1.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+        >
+          <ChevronDown
+            size={18}
+            className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          />
+        </button>
+        {open && (
+          <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+            {loading && matches.length === 0 && (
+              <li className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-500">
+                <Loader2 size={14} className="animate-spin" /> Searching…
+              </li>
+            )}
+            {!loading && matches.length === 0 && q.length >= 3 && (
+              <li className="px-3 py-2 text-sm text-neutral-500">
+                No cities found
+              </li>
+            )}
+            {matches.map((s, i) => (
+              <li key={s.street + s.label}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    pick(s);
+                  }}
+                  onMouseEnter={() => setHighlight(i)}
+                  className={`block w-full px-3 py-2 text-left ${
+                    i === highlight ? "bg-neutral-100" : "bg-white"
+                  }`}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-medium text-neutral-800">
+                      {s.city}
+                    </span>
+                    <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+                      City
+                    </span>
+                  </span>
+                  <span className="block text-xs text-neutral-500">{s.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Field>
+  );
+}
+
+function StreetAddressField({
+  value,
+  onChange,
+  onSelect,
+  state,
+  city,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSelect: (s: AddressSuggestion) => void;
+  state: string;
+  city: string;
+  error?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const [matches, setMatches] = useState<AddressSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  const q = value.trim();
+
+  useEffect(() => {
+    setHighlight(0);
+  }, [q]);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  useEffect(() => {
+    if (q.length < 2) {
+      setMatches([]);
+      return;
+    }
+
+    const ctrl = new AbortController();
+    setLoading(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const url = new URL(
+          "https://api.geoapify.com/v1/geocode/autocomplete"
+        );
+        const parts = [q];
+        if (city.trim()) parts.push(city.trim());
+        if (state) parts.push(state);
+        url.searchParams.set("text", parts.filter(Boolean).join(", "));
+        url.searchParams.set("apiKey", import.meta.env.VITE_GEOAPIFY_KEY);
+        url.searchParams.set("limit", "10");
+        url.searchParams.set("filter", "countrycode:us");
+
+        const res = await fetch(url.toString(), { signal: ctrl.signal });
+        const data = await res.json();
+        const stateLower = state.toLowerCase();
+        const rawFeatures = Array.isArray(data.features)
+          ? (data.features as any[])
+          : Array.isArray(data.results)
+            ? (data.results as any[]).map((r) => ({ properties: r }))
+            : [];
+        setMatches(
+          rawFeatures
+            .map((f) => {
+              const p = f.properties ?? {};
+              const sub: string =
+                [p.city || "", p.postcode || "", p.state || "", p.country || ""]
+                  .filter(Boolean)
+                  .join(", ") ||
+                p.address_line2 ||
+                p.formatted ||
+                "";
+              return {
+                street: p.address_line1 || p.street || p.name || "",
+                city: p.city || city,
+                state: p.state || state,
+                label: sub,
+                kind: "address" as const,
+              };
+            })
+            .filter(
+              (s) =>
+                s.street &&
+                s.label &&
+                (!state || s.state.toLowerCase() === stateLower)
+            )
+        );
+      } catch {
+        if (!ctrl.signal.aborted) setMatches([]);
+      } finally {
+        if (!ctrl.signal.aborted) setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [q, city, state]);
 
   const pick = (s: AddressSuggestion) => {
     onSelect(s);
@@ -414,7 +670,7 @@ function StreetAddressField({
               setOpen(false);
             }
           }}
-          placeholder="Type to search, e.g. 1234 Harbor Blvd"
+          placeholder="Type to search, e.g. 1234 Main St"
           className={`${fieldInput(!!error)} pr-10`}
         />
         <button
@@ -431,10 +687,29 @@ function StreetAddressField({
             className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           />
         </button>
-        {open && matches.length > 0 && (
+        {open && (
           <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+            {loading && matches.length === 0 && (
+              <li className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-500">
+                <Loader2 size={14} className="animate-spin" /> Searching…
+              </li>
+            )}
+            {!loading && matches.length === 0 && q.length >= 2 && (
+              <li className="px-3 py-2 text-sm text-neutral-500">
+                No addresses found
+              </li>
+            )}
+            {!loading && matches.length === 0 && q.length < 2 && city.trim() && (
+              <li className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-500">
+                <MapPin size={14} className="shrink-0" />
+                <span>
+                  Type a street address in <strong>{city}</strong>
+                  {state ? `, ${state}` : ""}
+                </span>
+              </li>
+            )}
             {matches.map((s, i) => (
-              <li key={s.label}>
+              <li key={s.street + s.label}>
                 <button
                   type="button"
                   onMouseDown={(e) => {
@@ -446,8 +721,13 @@ function StreetAddressField({
                     i === highlight ? "bg-neutral-100" : "bg-white"
                   }`}
                 >
-                  <span className="block text-sm font-medium text-neutral-800">
-                    {s.street}
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-medium text-neutral-800">
+                      {s.street}
+                    </span>
+                    <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+                      Address
+                    </span>
                   </span>
                   <span className="block text-xs text-neutral-500">{s.label}</span>
                 </button>
@@ -535,15 +815,24 @@ function AddressFields({
           </Field>
         </div>
 
+        <CityField
+          value={data.city}
+          onChange={(v) => update("city", v)}
+          onSelect={(s) => update("street", s.street)}
+          state={data.state}
+          error={err("city")}
+        />
+
         <StreetAddressField
           value={data.street}
           onChange={(v) => update("street", v)}
           onSelect={(s) => {
             update("street", s.street);
+            update("city", s.city || "");
             update("state", s.state);
           }}
-          suggestions={ADDRESS_SUGGESTIONS}
           state={data.state}
+          city={data.city}
           error={err("street")}
         />
 
@@ -829,7 +1118,9 @@ export default function CreateShipment() {
       const origin =
         originMode === "warehouse"
           ? `${warehousesOrigin().street}, ${warehousesOrigin().city}, ${warehousesOrigin().state}`
-          : `${shipFrom.street}, ${shipFrom.state}`;
+          : [shipFrom.street, shipFrom.city, shipFrom.state]
+              .filter(Boolean)
+              .join(", ");
 
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shipments`, {
         method: "POST",
@@ -837,7 +1128,9 @@ export default function CreateShipment() {
         body: JSON.stringify({
           trackingId,
           origin,
-          destination: `${shipTo.street}, ${shipTo.state}`,
+          destination: [shipTo.street, shipTo.city, shipTo.state]
+            .filter(Boolean)
+            .join(", "),
           expectedDelivery: eta.toISOString(),
           truckType: truckType,
           originMode: originMode,
@@ -961,7 +1254,7 @@ export default function CreateShipment() {
         : "w-full"
     }
   >
-            <div className="w-full">
+            <div className="w-full space-y-10">
               {/* ── Step 1 · Shipping Details ─────────────────────────────── */}
               {step === 0 && (
                 <>
@@ -1587,6 +1880,7 @@ export default function CreateShipment() {
                         <ReviewRow label="Full name / company" value={shipTo.fullName} />
                         <ReviewRow label="Contact name" value={shipTo.contactName} />
                         <ReviewRow label="Street address" value={shipTo.street} />
+                        <ReviewRow label="City / Town" value={shipTo.city} />
                         <ReviewRow label="State" value={shipTo.state} />
                         <ReviewRow label="Email" value={shipTo.email} />
                         <ReviewRow label="Phone" value={shipTo.phone} />

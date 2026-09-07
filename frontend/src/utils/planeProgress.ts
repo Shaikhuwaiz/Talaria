@@ -8,6 +8,7 @@ export interface PlaneProgressEntry {
   p: number;
   arrived: boolean;
   returning: boolean;
+  closed?: boolean;
   lat: number;
   lng: number;
 }
@@ -20,9 +21,10 @@ export const setPlaneProgress = (
   arrived: boolean,
   returning: boolean,
   lat: number,
-  lng: number
+  lng: number,
+  closed = false
 ): void => {
-  store.set(id, { p, arrived, returning, lat, lng });
+  store.set(id, { p, arrived, returning, closed, lat, lng });
 };
 
 export const getPlaneProgress = (id: string): PlaneProgressEntry | undefined =>

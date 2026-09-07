@@ -5,7 +5,7 @@ import { setPlaneProgress } from "../utils/planeProgress";
 import { hashOf } from "../utils/routeMath";
 import type { LatLng } from "../utils/routeMath";
 import { ensureRouteGeometry, fallbackRoute, routeFor } from "../utils/routeGeo";
-import type { LiveFlight } from "./LiveFlightMap";
+import { makeDateSchedule, type DateSchedule, type LiveFlight } from "./LiveFlightMap";
 
 // Must mirror LiveFlightMap's constants so progress is identical.
 const ONE_WAY_MS = 120000;
@@ -22,6 +22,8 @@ interface SimState {
   holdStart: number;
   simSrc?: { from: LatLng; to: LatLng; via?: [number, number][] };
   waiting?: boolean;
+  dateMode?: DateSchedule;
+  closed?: boolean;
 }
 
 const cumulate = (merc: number[][]): [number[], number] => {
@@ -74,6 +76,7 @@ export default function FlightSimulationDriver({
         holdStart: 0,
         simSrc: { from, to: toRaw, via: flight.routeCoords },
         waiting: loaded === null,
+        dateMode: makeDateSchedule(flight.deliveryDate, flight.departedAt, flight.shipmentId),
       });
     }
   }, [flights]);
@@ -88,7 +91,7 @@ export default function FlightSimulationDriver({
       const dt = Math.min(now - last, 100);
       last = now;
 
-      const out: Record<string, { p: number; arrived: boolean; returning: boolean; lat: number; lng: number }> = {};
+      const out: Record<string, { p: number; arrived: boolean; returning: boolean; closed: boolean; lat: number; lng: number }> = {};
 
       for (const [id, fs] of statesRef.current.entries()) {
         // Wait for road geometry; once it (or a settled fallback) is in,
@@ -107,7 +110,40 @@ export default function FlightSimulationDriver({
           }
         }
 
-        if (fs.phase === "forward") {
+        if (fs.dateMode) {
+          const nowAt = Date.now();
+          if (nowAt >= fs.dateMode.closeT) {
+            fs.progress = 0;
+            fs.phase = "arrived";
+            fs.closed = true;
+          } else if (nowAt >= fs.dateMode.returnStartT) {
+            fs.progress = Math.max(
+              0,
+              Math.min(
+                1,
+                (nowAt - fs.dateMode.returnStartT) /
+                  (fs.dateMode.closeT - fs.dateMode.returnStartT)
+              )
+            );
+            fs.phase = "return";
+            fs.closed = false;
+          } else if (nowAt >= fs.dateMode.arriveT) {
+            fs.progress = 1;
+            fs.phase = "arrived";
+            fs.closed = false;
+          } else {
+            fs.progress = Math.max(
+              0,
+              Math.min(
+                1,
+                (nowAt - fs.dateMode.startT) /
+                  (fs.dateMode.arriveT - fs.dateMode.startT)
+              )
+            );
+            fs.phase = "forward";
+            fs.closed = false;
+          }
+        } else if (fs.phase === "forward") {
           fs.progress = Math.min(1, fs.progress + dt / fs.duration);
           if (fs.progress >= 1) {
             fs.phase = "arrived";
@@ -138,6 +174,7 @@ export default function FlightSimulationDriver({
           p: fs.progress,
           arrived: fs.phase === "arrived",
           returning: fs.phase === "return",
+          closed: fs.closed === true,
           lat: lonlat[1],
           lng: lonlat[0],
         };
@@ -146,7 +183,7 @@ export default function FlightSimulationDriver({
       if (now - lastEmit >= 500) {
         lastEmit = now;
         for (const [id, v] of Object.entries(out)) {
-          setPlaneProgress(id, v.p, v.arrived, v.returning, v.lat, v.lng);
+          setPlaneProgress(id, v.p, v.arrived, v.returning, v.lat, v.lng, v.closed);
         }
       }
 
