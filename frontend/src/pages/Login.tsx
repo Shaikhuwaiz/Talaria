@@ -46,7 +46,7 @@ export default function Login() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      navigate("/orders", { replace: true });
+      navigate("/", { replace: true });
     }
   }, [navigate]);
 
@@ -61,7 +61,7 @@ export default function Login() {
       if (email) localStorage.setItem("email", email);
       if (name) localStorage.setItem("name", name);
       window.history.replaceState(null, "", window.location.pathname);
-      navigate("/orders", { replace: true });
+      navigate("/", { replace: true });
     }
     const authError = searchParams.get("error_description") || searchParams.get("error");
     if (authError) setError(authError);
@@ -80,7 +80,7 @@ export default function Login() {
     }
 
     setTimeout(() => {
-      navigate("/orders", { replace: true });
+      navigate("/", { replace: true });
       window.history.pushState(null, "", window.location.href);
     }, 200);
   };
