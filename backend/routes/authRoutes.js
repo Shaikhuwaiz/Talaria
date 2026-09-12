@@ -91,6 +91,97 @@ router.post("/google", async (req, res) => {
   }
 });
 
+// ✅ Google OAuth step 1: bounce the browser to Google (redirect flow, works in incognito)
+router.get("/google/redirect", (req, res) => {
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, FRONTEND_URL } = process.env;
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    return res.status(400).send("Google sign-in is not configured");
+  }
+
+  const redirectUri = `${FRONTEND_URL || "http://localhost:5173"}/api/auth/callback/google`;
+  const url =
+    "https://accounts.google.com/o/oauth2/v2/auth" +
+    `?client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    "&response_type=code" +
+    "&scope=openid%20email%20profile" +
+    "&access_type=offline" +
+    "&prompt=select_account";
+  res.redirect(url);
+});
+
+// ✅ Google OAuth step 2: exchange the code, mint our JWT, bounce back to the app
+router.get("/callback/google", async (req, res) => {
+  try {
+    const { code } = req.query;
+    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, FRONTEND_URL } = process.env;
+    if (!code) {
+      return res.status(400).send("Google callback missing authorization code");
+    }
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+      return res.status(400).send("Google OAuth is not configured");
+    }
+
+    const redirectUri = `${FRONTEND_URL || "http://localhost:5173"}/api/auth/callback/google`;
+
+    // Exchange the authorization code for an access token
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }),
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) {
+      return res
+        .status(400)
+        .send(
+          `Google token exchange failed: ${
+            tokenData.error_description || tokenData.error || "unknown error"
+          }`
+        );
+    }
+
+    // Fetch the Google profile
+    const profileRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    const profile = await profileRes.json();
+    if (!profile.email) {
+      return res.status(400).send("Could not resolve a Google email");
+    }
+
+    let user = await User.findOne({ email: profile.email });
+    if (!user) {
+      user = new User({
+        email: profile.email,
+        name: profile.name || "",
+        password: crypto.randomBytes(32).toString("hex"),
+      });
+      await user.save();
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    const frontendUrl = FRONTEND_URL || "http://localhost:5173";
+    res.redirect(
+      `${frontendUrl}/login?google_token=${token}` +
+        `&email=${encodeURIComponent(profile.email)}` +
+        `&name=${encodeURIComponent(user.name || "")}`
+    );
+  } catch (err) {
+    console.error("GOOGLE OAUTH ERROR:", err);
+    res.status(500).send("Google sign-in failed");
+  }
+});
+
 // ✅ GitHub OAuth step 1: bounce the browser to GitHub
 router.get("/github", (req, res) => {
   const clientId = process.env.GITHUB_CLIENT_ID;

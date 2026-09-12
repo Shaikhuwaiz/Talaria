@@ -18,12 +18,6 @@ const GITHUB_CLIENT_ID = (import.meta.env.VITE_GITHUB_CLIENT_ID as
   | string
   | undefined);
 
-declare global {
-  interface Window {
-    google?: any;
-  }
-}
-
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +29,6 @@ export default function Login() {
   const [otp, setOtp] = useState("");
   const [emailCodeSent, setEmailCodeSent] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
-  const [googleReady, setGoogleReady] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -57,13 +50,14 @@ export default function Login() {
     }
   }, [navigate]);
 
-  // ✅ Handle the GitHub OAuth callback token bounced back to /login
+  // ✅ Handle the OAuth callback token bounced back to /login
   useEffect(() => {
-    const ghToken = searchParams.get("github_token");
-    if (ghToken) {
+    const oauthToken =
+      searchParams.get("github_token") || searchParams.get("google_token");
+    if (oauthToken) {
       const email = searchParams.get("email") || "";
       const name = searchParams.get("name") || "";
-      localStorage.setItem("token", ghToken);
+      localStorage.setItem("token", oauthToken);
       if (email) localStorage.setItem("email", email);
       if (name) localStorage.setItem("name", name);
       window.history.replaceState(null, "", window.location.pathname);
@@ -72,31 +66,6 @@ export default function Login() {
     const authError = searchParams.get("error_description") || searchParams.get("error");
     if (authError) setError(authError);
   }, [searchParams, navigate]);
-
-  // ✅ Boot the Google Identity Services button
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
-
-    const mount = () => {
-      if (!window.google?.accounts) return;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential,
-      });
-      setGoogleReady(true);
-    };
-
-    if (window.google?.accounts) {
-      mount();
-    } else {
-      const script = document.createElement("script");
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
-      script.onload = mount;
-      document.head.appendChild(script);
-    }
-  }, []);
 
   const storeSession = (token: string, userEmail: string) => {
     localStorage.setItem("token", token);
@@ -196,29 +165,6 @@ export default function Login() {
       }
 
       storeSession(data.token, pendingEmail);
-    } catch (err) {
-      console.error(err);
-      setError("Server error");
-    }
-  };
-
-  const handleGoogleCredential = async (response: { credential: string }) => {
-    setError("");
-    try {
-      const res = await fetch(`${API}/auth/google`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: response.credential }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.message || "Google sign-in failed");
-        return;
-      }
-
-      localStorage.setItem("name", data.name || "");
-      storeSession(data.token, data.email || "");
     } catch (err) {
       console.error(err);
       setError("Server error");
@@ -353,16 +299,13 @@ export default function Login() {
                     <span className="h-px flex-1 bg-neutral-800" />
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      window.google?.accounts?.id?.prompt?.()
-                    }
-                    className="flex w-full items-center justify-center gap-3 rounded-full border border-neutral-700 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-100 disabled:opacity-60"
+                  <a
+                    href={`${API}/auth/google/redirect`}
+                    className="flex w-full items-center justify-center gap-3 rounded-full border border-neutral-700 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-100"
                   >
                     <GoogleIcon />
                     Continue with Google
-                  </button>
+                  </a>
                 </>
               )}
 
