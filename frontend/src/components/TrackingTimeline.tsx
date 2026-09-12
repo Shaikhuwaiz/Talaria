@@ -32,8 +32,8 @@ const T: Record<Theme, Record<string, string>> = {
     lineOn: "bg-white/70",
     nodeDone: "border-white bg-white text-black",
     nodeActive:
-      "border-white bg-neutral-950 text-white ring-4 ring-white/15 animate-pulse",
-    nodePing: "bg-white/20",
+      "border-white bg-neutral-950 text-white ring-2 ring-white/80 animate-pulse",
+    nodePing: "bg-white/10",
     nodePending: "border-neutral-700 bg-neutral-950 text-neutral-600",
     card: "rounded-xl border border-neutral-800/80 bg-neutral-900/60",
     item: "rounded-lg border border-neutral-800/60 bg-neutral-950/50",
@@ -53,8 +53,8 @@ const T: Record<Theme, Record<string, string>> = {
     lineOn: "bg-neutral-500",
     nodeDone: "border-neutral-900 bg-neutral-900 text-white",
     nodeActive:
-      "border-neutral-900 bg-white text-neutral-900 ring-4 ring-neutral-900/15 animate-pulse",
-    nodePing: "bg-neutral-900/20",
+      "border-neutral-900 bg-white text-neutral-900 ring-2 ring-neutral-900/80 animate-pulse",
+    nodePing: "bg-neutral-900/10",
     nodePending: "border-neutral-300 bg-white text-neutral-400",
     card: "rounded-xl border border-neutral-200 bg-neutral-50",
     item: "rounded-lg border border-neutral-200 bg-white",
@@ -70,6 +70,14 @@ const T: Record<Theme, Record<string, string>> = {
 const lastCompleted = (items: MovementEvent[]) => {
   const done = items.filter((i) => i.completed);
   return done[done.length - 1] ?? items[items.length - 1];
+};
+
+const PENDING_STAGE_HINT: Record<StageKey, string> = {
+  created: "Your shipment has been registered and is awaiting processing.",
+  departed: "Waiting for the facility to log the dispatch.",
+  transit: "Awaiting tracking update",
+  outfordelivery: "The courier hasn't scanned out for delivery yet.",
+  delivered: "",
 };
 
 function CheckinRow({
@@ -191,6 +199,36 @@ export default function TrackingTimeline({
     return init;
   }, [movements, history]);
 
+  // Anchor real event times + the booked ETA so stages that have no check-in
+  // scan yet can still show an estimated timestamp (e.g. a closed order).
+  const anchors = useMemo(() => {
+    const times: number[] = [];
+    for (const k of STAGE_ORDER)
+      for (const ev of groups[k]) {
+        const t = ev.timestamp ? new Date(ev.timestamp).getTime() : NaN;
+        if (!Number.isNaN(t)) times.push(t);
+      }
+    const end = expectedDelivery ? new Date(expectedDelivery).getTime() : NaN;
+    return {
+      start: times.length ? Math.min(...times) : null,
+      end: end && !Number.isNaN(end) ? end : times.length ? Math.max(...times) : null,
+    };
+  }, [groups, expectedDelivery]);
+
+  // Real event time when the stage has check-ins; otherwise an estimate walked
+  // out between the first real scan and the expected delivery.
+  const estimatedStageTime = (key: StageKey, items: MovementEvent[]) => {
+    if (items.length) {
+      const lastTs = lastCompleted(items)?.timestamp;
+      const t = lastTs ? new Date(lastTs) : null;
+      if (t && !Number.isNaN(t.getTime())) return t;
+    }
+    const { start, end } = anchors;
+    if (start == null || end == null) return undefined;
+    const frac = STAGE_ORDER.indexOf(key) / (STAGE_ORDER.length - 1);
+    return new Date(start + Math.round((end - start) * frac));
+  };
+
   return (
     <div className={`p-5 sm:p-6 ${t.container}`}>
       {showHeader && (
@@ -232,6 +270,10 @@ export default function TrackingTimeline({
           const active = state.active;
           const hasNext = i < STAGE_ORDER.length - 1;
           const NodeIcon = state.completed ? Check : meta.icon;
+          const emptyTs =
+            state.completed && displayItems.length === 0
+              ? formatEventTime(estimatedStageTime(key, items))
+              : "";
 
           return (
             <li key={key} className="relative pb-7 pl-14 last:pb-0">
@@ -298,15 +340,15 @@ export default function TrackingTimeline({
                   </ul>
                 ) : (
                   <p className={`mt-3 text-xs ${t.muted}`}>
-                    {key === "delivered"
-                      ? `Estimated delivery: ${
-                          expectedDelivery
-                            ? formatDateOnly(expectedDelivery)
-                            : "pending"
-                        }`
-                      : key === "transit"
-                        ? "Awaiting tracking update"
-                        : "No update yet"}
+                    {emptyTs
+                      ? emptyTs
+                      : key === "delivered"
+                        ? `Estimated delivery: ${
+                            expectedDelivery
+                              ? formatDateOnly(expectedDelivery)
+                              : "pending"
+                          }`
+                        : PENDING_STAGE_HINT[key]}
                   </p>
                 )}
               </div>

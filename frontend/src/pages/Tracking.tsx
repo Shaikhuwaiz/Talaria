@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { CloudSnow } from "lucide-react";
-import LiveFlightMap, { type LiveFlight } from "../components/LiveFlightMap";
+import LiveFlightMap, {
+  isClosedShipment,
+  type LiveFlight,
+} from "../components/LiveFlightMap";
 import TrackingTimeline from "../components/TrackingTimeline";
 import { resolveLocationCoords } from "../utils/shipmentCoords";
 import { isWarehouseOrigin } from "../utils/warehouses";
@@ -42,6 +45,19 @@ export default function Tracking() {
   }, [shipment]);
 
   const live = shipment ? getPlaneProgress(shipment.trackingId) : undefined;
+
+  // Closed orders are done — their map (and live truck) is disabled so the
+  // "minimap" doesn't linger on the tracking card after delivery.
+  const departedAt =
+    shipment?.history?.find((h) => !/created|label|book/i.test(h.status ?? ""))
+      ?.date ?? shipment?.history?.[0]?.date;
+  const closedOrder = shipment
+    ? isClosedShipment(
+        shipment.expectedDelivery,
+        departedAt,
+        shipment.trackingId
+      )
+    : false;
 
   // Weather-based delay notice (free Open-Meteo, no API key): if severe
   // weather is forecast near the destination on the promised delivery day,
@@ -240,10 +256,18 @@ export default function Tracking() {
             </div>
           )}
 
-          <div className="w-full mb-6 rounded-xl overflow-hidden border border-neutral-800">
-            <LiveFlightMap
-              autoFit
-              flights={[
+          {closedOrder ? (
+            <div className="w-full mb-6 rounded-xl border border-neutral-800 bg-neutral-900 p-10 text-center shadow-lg shadow-neutral-900/5">
+              <p className="text-sm font-semibold text-white">Order closed</p>
+              <p className="mt-1 text-xs text-neutral-500">
+                This shipment was delivered and its journey is complete.
+              </p>
+            </div>
+          ) : (
+            <div className="w-full mb-6 rounded-xl overflow-hidden border border-neutral-800">
+              <LiveFlightMap
+                autoFit
+                flights={[
                 {
                   shipmentId: shipment.trackingId,
                   origin: shipment.origin,
@@ -266,8 +290,9 @@ export default function Tracking() {
                     ),
                 },
               ]}
-            />
-          </div>
+              />
+            </div>
+          )}
 
           <TrackingTimeline
             movements={shipment.movements}

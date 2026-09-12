@@ -191,6 +191,16 @@ export const makeDateSchedule = (
   };
 };
 
+// True once a shipment's date-scheduled journey has fully closed (delivered,
+// returned and past its close time). Used by live map feeds so closed orders
+// never show on the map or count toward "loads on the road".
+export const isClosedShipment = (
+  deliveryDate?: string,
+  departedAt?: string,
+  id?: string
+): boolean =>
+  Date.now() >= makeDateSchedule(deliveryDate, departedAt, id).closeT;
+
 const makeTruckImg = () => {
   const img = document.createElement("img");
   img.src = "https://img.icons8.com/office/40/truck-top-view.png";
@@ -288,11 +298,20 @@ export default function LiveFlightMap({
     let fitExtent: [number, number, number, number] | null = null;
 
     for (const flight of flightsRef.current) {
-      // Closed orders are done: remove the truck and skip the route line/pins.
-      const existing = flightStateRef.current.get(flight.shipmentId);
-      if (existing?.closed) {
-        const el = existing.overlay.getElement();
-        if (el) el.style.display = "none";
+      // Closed orders are done: strip their truck, route line and pins so they
+      // never linger on the map (even if they closed while it was mounted).
+      if (isClosedShipment(flight.deliveryDate, flight.departedAt, flight.shipmentId)) {
+        const stale = flightStateRef.current.get(flight.shipmentId);
+        if (stale) {
+          map.removeOverlay(stale.overlay);
+          flightStateRef.current.delete(flight.shipmentId);
+        }
+        for (const [key, overlay] of [...pinOverlaysRef.current.entries()]) {
+          if (key.startsWith(flight.shipmentId + "-")) {
+            map.removeOverlay(overlay);
+            pinOverlaysRef.current.delete(key);
+          }
+        }
         continue;
       }
 
@@ -529,6 +548,7 @@ export default function LiveFlightMap({
 
       const out: Record<string, { p: number; arrived: boolean; returning: boolean; closed: boolean; lat: number; lng: number }> = {};
       let resolvedWaiting = false;
+      let closedNow = false;
 
       for (const [id, fs] of flightStateRef.current.entries()) {
         // Upgrade to real road geometry once it arrives; wait (don't pose)
@@ -560,6 +580,7 @@ export default function LiveFlightMap({
             fs.progress = 0;
             fs.phase = "arrived";
             fs.closed = true;
+            closedNow = true;
           } else if (nowAt >= fs.dateMode.returnStartT) {
             fs.progress = Math.max(
               0,
@@ -686,8 +707,9 @@ export default function LiveFlightMap({
         onProgressRef.current?.(out);
       }
 
-      // Redraw the dashed line with the real road geometry now that it is in.
-      if (resolvedWaiting) syncRef.current();
+      // Redraw the dashed line with the real road geometry now that it is in,
+      // or strip a flight that just closed so its route/pins don't linger.
+      if (resolvedWaiting || closedNow) syncRef.current();
 
       raf = requestAnimationFrame(tick);
     };

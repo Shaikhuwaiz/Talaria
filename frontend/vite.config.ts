@@ -5,10 +5,10 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   server: {
     proxy: {
-      "/api": "http://localhost:7000", // Adjust to your backend port
+      "/api": "http://localhost:7001", // Adjust to your backend port
       // Real-time (Socket.IO) traffic → same backend
       "/socket.io": {
-        target: "http://localhost:7000",
+        target: "http://localhost:7001",
         ws: true,
       },
     },

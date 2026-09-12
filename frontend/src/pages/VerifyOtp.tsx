@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import AuthLayout from "../layouts/AuthLayout";
 
 export default function VerifyOtp() {
   const [otp, setOtp] = useState("");
@@ -48,47 +47,65 @@ export default function VerifyOtp() {
   };
 
   return (
-    <AuthLayout>
-      <div className="w-80 sm:w-96 rounded-2xl border border-neutral-800 bg-neutral-900 p-10 text-center text-white">
-        <h2 className="mb-1.5 text-2xl font-semibold tracking-tight">
-          Verify code
-        </h2>
-        <p className="mb-6 text-sm text-neutral-400">
-          Code sent to <span className="font-semibold text-white">{email}</span>
-        </p>
-
-        {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
-
-        <form onSubmit={handleVerify} className="space-y-4">
-          <input
-            type="text"
-            placeholder="6-digit code"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            maxLength={6}
-            required
-            className="w-full rounded-lg border border-neutral-700 bg-black px-3.5 py-2.5 text-center text-lg tracking-[0.4em] text-white placeholder-neutral-500 outline-none transition-colors focus:border-white"
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-full bg-white py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200 disabled:opacity-60"
-          >
-            {loading ? "Verifying..." : "Verify code"}
-          </button>
-        </form>
-
-        <p className="mt-5 text-sm text-neutral-400">
-          Didn't receive it?{" "}
-          <Link
-            to="/forgot-password"
-            className="font-semibold text-white underline-offset-4 hover:underline"
-          >
-            Try again
-          </Link>
-        </p>
+    <div className="flex min-h-screen w-full bg-black text-white">
+      {/* ── LEFT · Image (pinned to viewport, cropped) ───────────── */}
+      <div className="hidden lg:block w-[55%] relative overflow-hidden bg-black h-screen sticky top-0">
+        <img
+          src="/dispatch.png"
+          alt="Talaria"
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
       </div>
-    </AuthLayout>
+
+      {/* ── RIGHT · Verify code form ─────────────────────────────── */}
+      <div className="flex w-full lg:w-[45%] items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm">
+          <h2 className="text-3xl font-semibold tracking-tight">
+            Verify code
+          </h2>
+          <p className="mt-1.5 text-sm text-neutral-500">
+            Code sent to{" "}
+            <span className="font-semibold text-white">{email}</span>
+          </p>
+
+          {error && (
+            <p className="mt-5 rounded-lg border border-red-500/40 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-400">
+              {error}
+            </p>
+          )}
+
+          <form onSubmit={handleVerify} className="mt-8 space-y-4">
+            <input
+              type="text"
+              placeholder="6-digit code"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              maxLength={6}
+              required
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3.5 py-2.5 text-center text-lg tracking-[0.4em] text-white placeholder-neutral-500 outline-none transition-colors focus:border-white"
+            />
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-full bg-white py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200 disabled:opacity-60"
+            >
+              {loading ? "Verifying..." : "Verify code"}
+            </button>
+          </form>
+
+          <p className="mt-5 text-sm text-neutral-400">
+            Didn't receive it?{" "}
+            <Link
+              to="/forgot-password"
+              className="font-semibold text-white underline-offset-4 hover:underline"
+            >
+              Try again
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -59,8 +59,14 @@ export const sendLoginEmail = async (email, timezone, otp) => {
   }
 };
 
-export const sendOtpEmail = async (email, otp) => {
+export const sendOtpEmail = async (
+  email,
+  otp,
+  opts = {}
+) => {
   try {
+    const subject = opts.subject || "Password Reset OTP – Talaria";
+    const heading = opts.heading || "Talaria Password Reset";
     const htmlContent = `
       <table width="100%" cellpadding="0" cellspacing="0" style="font-family: Arial, sans-serif;">
         <tr>
@@ -77,14 +83,14 @@ export const sendOtpEmail = async (email, otp) => {
                   />
                 </td>
                 <td style="padding-left: 8px; font-size: 22px; font-weight: bold;">
-                  Talaria Password Reset
+                  ${heading}
                 </td>
               </tr>
             </table>
 
             <!-- Body -->
             <p style="margin-top: 20px; font-size: 16px;">
-              Your OTP is:
+              Your one-time code is:
             </p>
 
             <div style="
@@ -111,7 +117,7 @@ export const sendOtpEmail = async (email, otp) => {
     await resend.emails.send({
       from: "Talaria <noreply@talaria.co.in>",
       to: email,
-      subject: "Password Reset OTP – Talaria",
+      subject,
       html: htmlContent
     });
   } catch (err) {

@@ -1,12 +1,28 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import talariaLogo from "../image/logo.svg";
+import { GoogleIcon, GitHubIcon } from "../components/OAuthIcons";
+
+const API = import.meta.env.VITE_BACKEND_URL;
+const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID as
+  | string
+  | undefined);
+const GITHUB_CLIENT_ID = (import.meta.env.VITE_GITHUB_CLIENT_ID as
+  | string
+  | undefined);
+
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [googleReady, setGoogleReady] = useState(false);
   const navigate = useNavigate();
 
   // ✅ Redirect if already logged in
@@ -16,6 +32,60 @@ export default function Register() {
       navigate("/orders", { replace: true });
     }
   }, [navigate]);
+
+  // ✅ Boot Google Identity Services
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+
+    const mount = () => {
+      if (!window.google?.accounts) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+      });
+      setGoogleReady(true);
+    };
+
+    if (window.google?.accounts) {
+      mount();
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = mount;
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  const handleGoogleCredential = async (response: { credential: string }) => {
+    setError("");
+    try {
+      const res = await fetch(`${API}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || "Google sign-in failed");
+        return;
+      }
+
+      localStorage.setItem("name", data.name || "");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("email", data.email || "");
+
+      setTimeout(() => {
+        navigate("/orders", { replace: true });
+        window.history.pushState(null, "", window.location.href);
+      }, 200);
+    } catch (err) {
+      console.error(err);
+      setError("Server error");
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,6 +224,37 @@ export default function Register() {
               Create account
             </button>
           </form>
+
+          {GOOGLE_CLIENT_ID && (
+            <>
+              <div className="my-6 flex items-center gap-3">
+                <span className="h-px flex-1 bg-neutral-800" />
+                <span className="text-xs uppercase tracking-widest text-neutral-600">
+                  or
+                </span>
+                <span className="h-px flex-1 bg-neutral-800" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => window.google?.accounts?.id?.prompt?.()}
+                className="flex w-full items-center justify-center gap-3 rounded-full border border-neutral-700 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-100 disabled:opacity-60"
+              >
+                <GoogleIcon />
+                Sign up with Google
+              </button>
+            </>
+          )}
+
+          {GITHUB_CLIENT_ID && (
+            <a
+              href={`${API}/auth/github`}
+              className="mt-3 flex w-full items-center justify-center gap-3 rounded-full border border-neutral-700 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-100"
+            >
+              <GitHubIcon />
+              Sign up with GitHub
+            </a>
+          )}
 
           <p className="mt-5 text-sm text-neutral-400">
             Already have an account?{" "}

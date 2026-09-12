@@ -14,8 +14,8 @@ const T: Record<Theme, Record<string, string>> = {
     dotOn: "border-white/80 bg-white text-black",
     dotOff: "border-neutral-700 bg-neutral-900 text-neutral-700",
     dotActive:
-      "border-white ring-2 ring-white/25 bg-neutral-950 text-white animate-pulse",
-    dotPing: "bg-white/20",
+      "border-white ring-2 ring-white/80 bg-neutral-950 text-white animate-pulse",
+    dotPing: "bg-white/10",
     lineOn: "bg-white/60",
     lineOff: "bg-neutral-800",
     label: "text-neutral-400",
@@ -25,8 +25,8 @@ const T: Record<Theme, Record<string, string>> = {
     dotOn: "border-neutral-900 bg-neutral-900 text-white",
     dotOff: "border-neutral-300 bg-white text-neutral-400",
     dotActive:
-      "border-neutral-900 ring-2 ring-neutral-900/25 bg-white text-neutral-900 animate-pulse",
-    dotPing: "bg-neutral-900/20",
+      "border-neutral-900 ring-2 ring-neutral-900/80 bg-white text-neutral-900 animate-pulse",
+    dotPing: "bg-neutral-900/10",
     lineOn: "bg-neutral-600",
     lineOff: "bg-neutral-200",
     label: "text-neutral-500",

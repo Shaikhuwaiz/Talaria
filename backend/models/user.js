@@ -2,8 +2,12 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema({
+  name: { type: String, default: "" },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  twoFactorEnabled: { type: Boolean, default: false },
+  twoFactorMethod: { type: String, enum: ["email", "totp"], default: "" },
+  totpSecret: { type: String, default: "" },
 });
 
 // Hash password before saving

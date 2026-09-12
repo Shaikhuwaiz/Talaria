@@ -323,12 +323,6 @@ export default function Landing() {
                 >
                   Sign in
                 </Link>
-                <Link
-                  to="/register"
-                  className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-neutral-200 transition-colors"
-                >
-                  Get a quote
-                </Link>
               </>
             )}
           </div>
@@ -373,13 +367,6 @@ export default function Landing() {
                   >
                     Sign in
                   </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex-1 text-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-black"
-                  >
-                    Get a quote
-                  </Link>
                 </>
               )}
             </div>
@@ -404,6 +391,13 @@ className={`absolute inset-0 h-full w-full object-cover transition-all duration-
           ))}
         </div>
 
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 75% 65% at 50% 40%, rgba(10,10,10,0.62) 0%, rgba(10,10,10,0.32) 50%, transparent 75%)",
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-neutral-950/95 pointer-events-none" />
 
         <div className="relative mx-auto max-w-6xl px-5 pt-44 pb-24">

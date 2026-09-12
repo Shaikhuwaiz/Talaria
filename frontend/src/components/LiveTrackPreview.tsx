@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import LiveFlightMap, { type LiveFlight } from "./LiveFlightMap";
+import LiveFlightMap, {
+  isClosedShipment,
+  type LiveFlight,
+} from "./LiveFlightMap";
 import { resolveLocationCoords } from "../utils/shipmentCoords";
 import { isWarehouseOrigin } from "../utils/warehouses";
 
@@ -14,6 +17,15 @@ type Shipment = {
   originMode?: string;
 };
 
+const departedAtOf = (s: Shipment): string | undefined =>
+  s.history?.find((h) => !/created|label|book/i.test(h.status ?? ""))?.date ??
+  s.history?.[0]?.date;
+
+// Closed orders (delivered, returned and past their schedule close) are done:
+// keep them off the live map and out of the "loads on the road" count.
+const isClosed = (s: Shipment): boolean =>
+  isClosedShipment(s.expectedDelivery, departedAtOf(s), s.trackingId);
+
 const toLiveFlight = (s: Shipment): LiveFlight => ({
   shipmentId: s.trackingId,
   origin: s.origin,
@@ -21,9 +33,7 @@ const toLiveFlight = (s: Shipment): LiveFlight => ({
   status: s.status,
   originIsWarehouse: s.originMode === "warehouse" || isWarehouseOrigin(s.origin),
   deliveryDate: s.expectedDelivery,
-  departedAt:
-    s.history?.find((h) => !/created|label|book/i.test(h.status ?? ""))?.date ??
-    s.history?.[0]?.date,
+  departedAt: departedAtOf(s),
   routeCoords: (s.history ?? [])
     .map((h) => resolveLocationCoords(h.location))
     .filter((c): c is [number, number] => Array.isArray(c) && c.length === 2),
@@ -40,7 +50,7 @@ export default function LiveTrackPreview() {
         if (cancelled) return;
         setFlights(
           data
-            .filter((s) => s.status && s.status !== "Delivered")
+            .filter((s) => s.status && s.status !== "Delivered" && !isClosed(s))
             .map(toLiveFlight)
         );
       })
@@ -61,7 +71,7 @@ export default function LiveTrackPreview() {
 
     const addFlight = (s: Shipment) => {
       if (!s?.trackingId || !s.origin || !s.destination) return;
-      if (s.status === "Delivered") return;
+      if (s.status === "Delivered" || isClosed(s)) return;
       setFlights((prev) =>
         prev.some((f) => f.shipmentId === s.trackingId)
           ? prev
@@ -77,6 +87,7 @@ export default function LiveTrackPreview() {
           if (
             s &&
             s.status !== "Delivered" &&
+            !isClosed(s) &&
             s.trackingId &&
             s.origin &&
             s.destination &&
