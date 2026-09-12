@@ -498,7 +498,7 @@ export default function Profile() {
               </form>
 
             {/* SECURITY · TWO-FACTOR AUTH */}
-            <div className="w-full bg-white/5 p-6 rounded-xl border border-white/10">
+            <div className="w-full mt-8 bg-white/5 p-6 rounded-xl border border-white/10">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h4 className="text-sm font-semibold flex items-center gap-2">
