@@ -75,9 +75,13 @@ router.post("/google", async (req, res) => {
         email: payload.email,
         name: payload.name || "",
         password: crypto.randomBytes(32).toString("hex"),
+        avatarUrl: payload.picture || "",
       });
       await user.save();
       created = true;
+    } else if (payload.picture) {
+      user.avatarUrl = payload.picture;
+      await user.save();
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -170,7 +174,11 @@ router.get("/callback/google", async (req, res) => {
         email: profile.email,
         name: profile.name || "",
         password: crypto.randomBytes(32).toString("hex"),
+        avatarUrl: profile.picture || "",
       });
+      await user.save();
+    } else if (profile.picture) {
+      user.avatarUrl = profile.picture;
       await user.save();
     }
 
@@ -278,7 +286,11 @@ router.get("/callback/github", async (req, res) => {
         email,
         name: gh.name || gh.login || "",
         password: crypto.randomBytes(32).toString("hex"),
+        avatarUrl: gh.avatar_url || "",
       });
+      await user.save();
+    } else if (gh.avatar_url) {
+      user.avatarUrl = gh.avatar_url;
       await user.save();
     }
 
@@ -523,6 +535,7 @@ router.get("/me", authRequired, async (req, res) => {
     res.json({
       name: user.name || "",
       email: user.email,
+      avatarUrl: user.avatarUrl || "",
       joined: user.createdAt || user._id.getTimestamp(),
       twoFactorEnabled: user.twoFactorEnabled || false,
       twoFactorMethod: user.twoFactorEnabled ? user.twoFactorMethod || "email" : "",

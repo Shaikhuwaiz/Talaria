@@ -18,6 +18,7 @@ export default function Profile() {
   const [user, setUser] = useState({
     name: "",
     email: "",
+    avatarUrl: "",
     role: "Logistics Manager",
     joined: "",
   });
@@ -71,6 +72,7 @@ export default function Profile() {
         setUser({
           name,
           email: data.email || "",
+          avatarUrl: data.avatarUrl || "",
           role: "Logistics Manager",
           joined,
         });
@@ -358,11 +360,22 @@ export default function Profile() {
           <>
             {/* ICON AVATAR — TOP CENTER */}
             <div className="flex flex-col items-center mt-8 mb-6">
-              <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-neutral-600 to-neutral-800 shadow-lg flex items-center justify-center">
-                <User size={52} className="text-white" strokeWidth={2.2} />
-                <span className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full border-4 border-neutral-950 flex items-center justify-center">
-                  <Camera size={14} className="text-neutral-950" />
-                </span>
+              <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-neutral-600 to-neutral-800 shadow-lg flex items-center justify-center overflow-hidden">
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <User size={52} className="text-white" strokeWidth={2.2} />
+                )}
+                {!user.avatarUrl && (
+                  <span className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full border-4 border-neutral-950 flex items-center justify-center">
+                    <Camera size={14} className="text-neutral-950" />
+                  </span>
+                )}
               </div>
               <h3 className="mt-4 text-xl font-semibold text-center">{user.name}</h3>
               <p className="text-neutral-400 text-sm text-center">{user.role}</p>
