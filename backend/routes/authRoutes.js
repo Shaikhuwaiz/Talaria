@@ -91,14 +91,21 @@ router.post("/google", async (req, res) => {
   }
 });
 
+// Build which base URL OAuth callbacks should land on. The callback must hit
+// this backend directly (not the SPA host), so it uses API_URL / FRONTEND_URL.
+const apiBase = () =>
+  process.env.API_URL ||
+  process.env.FRONTEND_URL ||
+  "http://localhost:5173";
+
 // ✅ Google OAuth step 1: bounce the browser to Google (redirect flow, works in incognito)
 router.get("/google/redirect", (req, res) => {
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, FRONTEND_URL } = process.env;
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
     return res.status(400).send("Google sign-in is not configured");
   }
 
-  const redirectUri = `${FRONTEND_URL || "http://localhost:5173"}/api/auth/callback/google`;
+  const redirectUri = `${apiBase()}/api/auth/callback/google`;
   const url =
     "https://accounts.google.com/o/oauth2/v2/auth" +
     `?client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
@@ -122,7 +129,7 @@ router.get("/callback/google", async (req, res) => {
       return res.status(400).send("Google OAuth is not configured");
     }
 
-    const redirectUri = `${FRONTEND_URL || "http://localhost:5173"}/api/auth/callback/google`;
+    const redirectUri = `${apiBase()}/api/auth/callback/google`;
 
     // Exchange the authorization code for an access token
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -187,7 +194,7 @@ router.get("/github", (req, res) => {
   const clientId = process.env.GITHUB_CLIENT_ID;
   if (!clientId) return res.status(400).send("GitHub sign-in is not configured");
 
-  const redirectUri = `${process.env.FRONTEND_URL || "http://localhost:5173"}/api/auth/callback/github`;
+  const redirectUri = `${apiBase()}/api/auth/callback/github`;
   const url =
     "https://github.com/login/oauth/authorize" +
     `?client_id=${encodeURIComponent(clientId)}` +
@@ -207,7 +214,7 @@ router.get("/callback/github", async (req, res) => {
       return res.status(400).send("GitHub OAuth is not configured (missing client secret)");
     }
 
-    const redirectUri = `${process.env.FRONTEND_URL || "http://localhost:5173"}/api/auth/callback/github`;
+    const redirectUri = `${apiBase()}/api/auth/callback/github`;
 
     // Exchange the authorization code for an access token
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
