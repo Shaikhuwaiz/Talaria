@@ -586,8 +586,9 @@ export default function LiveFlightMap({
               0,
               Math.min(
                 1,
-                (nowAt - fs.dateMode.returnStartT) /
-                  (fs.dateMode.closeT - fs.dateMode.returnStartT)
+                1 -
+                  (nowAt - fs.dateMode.returnStartT) /
+                    (fs.dateMode.closeT - fs.dateMode.returnStartT)
               )
             );
             fs.phase = "return";
