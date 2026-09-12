@@ -94,8 +94,8 @@
 }
 
 .flight-plane-img {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   position: relative;
   z-index: 1;
