@@ -15,7 +15,14 @@ dotenv.config({ path: "./.env" });
 const app = express();
 const PORT = process.env.PORT || 7000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://www.talaria.co.in",
+    ],
+  })
+);
 app.use(express.json());
 
 app.use("/auth", authRoutes);
