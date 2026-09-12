@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   avatarUrl: { type: String, default: "" },
   twoFactorEnabled: { type: Boolean, default: false },
-  twoFactorMethod: { type: String, enum: ["email", "totp"], default: "" },
+  twoFactorMethod: { type: String, enum: ["email", "totp", ""], default: "" },
   totpSecret: { type: String, default: "" },
 });
 
