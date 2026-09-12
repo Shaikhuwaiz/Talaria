@@ -123,7 +123,8 @@ router.get("/callback/google", async (req, res) => {
     const { code } = req.query;
     const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, FRONTEND_URL } = process.env;
     if (!code) {
-      return res.status(400).send("Google callback missing authorization code");
+      const loginUrl = FRONTEND_URL || "http://localhost:5173";
+      return res.redirect(`${loginUrl}/login?error=google_callback_incomplete`);
     }
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
       return res.status(400).send("Google OAuth is not configured");
@@ -209,7 +210,10 @@ router.get("/callback/github", async (req, res) => {
     const { code } = req.query;
     const clientId = process.env.GITHUB_CLIENT_ID;
     const clientSecret = process.env.GITHUB_CLIENT_SECRET;
-    if (!code) return res.status(400).send("GitHub callback missing authorization code");
+    if (!code) {
+      const loginUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+      return res.redirect(`${loginUrl}/login?error=github_callback_incomplete`);
+    }
     if (!clientId || !clientSecret) {
       return res.status(400).send("GitHub OAuth is not configured (missing client secret)");
     }
