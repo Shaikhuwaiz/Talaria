@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
 import { FLEET } from "../utils/fleet";
+import TruckModelViewer from "./TruckModelViewer";
 
 export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
   const card = dark
@@ -21,12 +21,21 @@ export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
             className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${card}`}
           >
             <div className="relative aspect-[16/10] overflow-hidden bg-neutral-900">
-              <img
-                src={t.img}
-                alt={`${t.name} trailer`}
-                loading="lazy"
-                className="absolute inset-0 h-full w-full object-cover opacity-80 transition-all duration-500 group-hover:scale-105 group-hover:opacity-95"
-              />
+              {t.model ? (
+                <TruckModelViewer
+                  src={t.model}
+                  poster={t.img}
+                  alt={`${t.name} trailer 3D view`}
+                  className="relative h-full w-full"
+                />
+              ) : (
+                <img
+                  src={t.img}
+                  alt={`${t.name} trailer`}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover opacity-80 transition-all duration-500 group-hover:scale-105 group-hover:opacity-95"
+                />
+              )}
               <span
                 className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold ${t.badge}`}
               >
@@ -35,6 +44,15 @@ export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
               <span className="absolute bottom-3 left-3 rounded-full bg-black/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
                 {t.category}
               </span>
+              {t.model && (
+                <span className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  </span>
+                  Live 3D view
+                </span>
+              )}
             </div>
 
             <div className="flex flex-1 flex-col gap-3 p-5">
@@ -69,10 +87,6 @@ export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
                   <p className={`mt-0.5 text-sm font-semibold ${name}`}>{t.loadHeight}</p>
                 </div>
               </div>
-
-              <span className={`inline-flex items-center gap-1.5 text-sm font-semibold transition-all ${dark ? "text-white group-hover:gap-3" : "text-neutral-900 group-hover:gap-3"}`}>
-                View rig in 3D <ArrowUpRight size={16} />
-              </span>
             </div>
           </Link>
         ))}

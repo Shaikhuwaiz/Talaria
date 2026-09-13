@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import talariaLogo from "../image/logo.svg";
 import { FLEET } from "../utils/fleet";
-import SketchfabViewer from "../components/SketchfabViewer";
+import TruckModelViewer from "../components/TruckModelViewer";
 
 const STAT_ICONS = [Weight, Ruler, ArrowLeftRight, MoveHorizontal];
 const STAT_LABELS = ["Payload", "Load height", "Length", "Width"];
@@ -132,13 +132,25 @@ export default function FleetDetail() {
           </div>
 
           <div className="relative overflow-hidden rounded-2xl bg-[#06070a] shadow-2xl shadow-black/60">
-            <SketchfabViewer
-              src={truck.sketchfab}
-              autoSpin={0}
-              className="aspect-[4/3] w-full lg:h-[520px]"
-            />
-            <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur">
-              Static view · Drag to orbit
+            {truck.model ? (
+              <TruckModelViewer
+                src={truck.model}
+                poster={truck.img}
+                alt={`${truck.name} trailer 3D view`}
+                lazy={false}
+                className="relative aspect-[4/3] w-full lg:h-[520px]"
+              />
+            ) : (
+              <div className="relative aspect-[4/3] w-full lg:h-[520px]">
+                <img
+                  src={truck.img}
+                  alt={`${truck.name} trailer`}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </div>
+            )}
+            <span className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur">
+              {truck.model ? "360° view · Drag to orbit" : "Static view · In the fleet"}
             </span>
           </div>
         </div>
