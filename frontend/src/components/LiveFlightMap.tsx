@@ -54,10 +54,6 @@ const NA_EXTENT = (() => {
 const ONE_WAY_MS = 120000;
 const VARIANCE_MS = 45000;
 const ARRIVED_HOLD_MS = 4000;
-// Distance ahead/behind a truck used to derive its heading, in Web Mercator
-// units (≈ meters at the equator). Keeps the truck aimed along the overall
-// road instead of jittering with individual vertices.
-const LOOKAHEAD_METERS = 12000;
 
 interface PlaneState {
   overlay: Overlay;
@@ -72,6 +68,8 @@ interface PlaneState {
   phase: "forward" | "arrived" | "return";
   holdStart: number;
   rotation?: number;
+  prevX?: number;
+  prevY?: number;
   simSrc?: { from: LatLng; to: LatLng; via?: [number, number][] };
   waiting?: boolean;
   dateMode?: DateSchedule;
@@ -658,27 +656,36 @@ export default function LiveFlightMap({
 
         fs.overlay.setPosition([px, py]);
 
-        // Aim at a point ~12 km ahead (behind on the return leg) so the
-        // truck faces the true travel direction instead of snapping to
-        // individual (noisy) road vertices. Rotation is then limited to a
-        // fixed angular speed so the truck sweeps smoothly into turns and
-        // never flicks around like a compass needle (e.g. the u-turn when
-        // the return leg begins).
-        const lookT =
-          fs.phase === "return" ? t - LOOKAHEAD_METERS : t + LOOKAHEAD_METERS;
-        const tc = Math.max(0, Math.min(fs.total, lookT));
-        let k = 0;
-        while (k < fs.cum.length - 1 && tc > fs.cum[k + 1]) k++;
-        const ax = fs.mpts[k][0] - px;
-        const ay = fs.mpts[k][1] - py;
-        const heading = (Math.atan2(ax, ay) * 180) / Math.PI;
-        const targetRotation = heading - 90;
+        // Bearing from the truck's actual movement along the polyline, so the
+        // icon points in the true travel direction (toward the destination on
+        // the outbound leg, toward the warehouse on the return leg). Rotation
+        // is limited to a fixed angular speed so the truck sweeps smoothly
+        // into turns and never flicks around like a compass needle.
+        let targetRotation = fs.rotation ?? 0;
+        if (fs.prevX != null) {
+          const mvx = px - fs.prevX;
+          const mvy = py - (fs.prevY ?? py);
+          if (Math.hypot(mvx, mvy) > 1e-6) {
+            const heading = (Math.atan2(mvx, mvy) * 180) / Math.PI;
+            targetRotation = heading - 90;
+          }
+        } else {
+          // First frame: aim along the current polyline segment so a freshly
+          // spawned truck is oriented correctly before its position moves.
+          const dh = Math.hypot(x1 - px, y1 - py);
+          if (dh > 1e-6) {
+            const heading = (Math.atan2(x1 - px, y1 - py) * 180) / Math.PI;
+            targetRotation = heading - 90;
+          }
+        }
+        fs.prevX = px;
+        fs.prevY = py;
         const prevRotation = fs.rotation ?? targetRotation;
         const diff = ((targetRotation - prevRotation + 540) % 360) - 180;
         const maxDegPerSec = 70;
         const maxStep = (maxDegPerSec * dt) / 1000;
         const step = Math.max(-maxStep, Math.min(maxStep, diff));
-        fs.rotation = (fs.rotation ?? prevRotation) + step;
+        fs.rotation = prevRotation + step;
         fs.img.style.transform = `rotate(${fs.rotation}deg)`;
 
         const lonlat = toLonLat([px, py]);
