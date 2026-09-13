@@ -241,9 +241,11 @@ export default function TrackingTimeline({
               {statusLabel}
             </p>
           </div>
-          <p className={`text-sm ${t.muted}`}>
-            Estimated delivery:{" "}
-            <span className={`font-semibold ${t.text}`}>
+          <p className={`text-right ${t.muted}`}>
+            <span className="block text-[10px] font-semibold uppercase tracking-widest">
+              Estimated delivery
+            </span>
+            <span className={`mt-0.5 block text-sm font-semibold ${t.text}`}>
               {expectedDelivery ? formatDateOnly(expectedDelivery) : "—"}
             </span>
           </p>

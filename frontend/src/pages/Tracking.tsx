@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { CloudSnow } from "lucide-react";
 import LiveFlightMap, {
   isClosedShipment,
@@ -29,12 +30,22 @@ interface Shipment {
 }
 
 export default function Tracking() {
-  const [trackingId, setTrackingId] = useState("");
+  const location = useLocation();
+  const initialTrackingId =
+    (location.state as { trackingId?: string } | null)?.trackingId ?? "";
+  const [trackingId, setTrackingId] = useState(initialTrackingId);
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [weatherDelay, setWeatherDelay] = useState("");
   const [, setTick] = useState(0);
+
+  // Prefill + auto-search when the page is opened from My Orders
+  // ("Track Package" / "View details").
+  useEffect(() => {
+    if (initialTrackingId) handleTrack(initialTrackingId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Re-render on an interval so the timeline stays in sync with the live
   // truck/plane progress the map pushes into the shared planeProgress store.
@@ -151,8 +162,9 @@ export default function Tracking() {
     }
   };
 
-  const handleTrack = async () => {
-    if (!trackingId) return;
+  const handleTrack = async (searchId?: string) => {
+    const target = searchId ?? trackingId;
+    if (!target) return;
 
     setLoading(true);
     setError("");
@@ -160,7 +172,7 @@ export default function Tracking() {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/shipments/${trackingId}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/shipments/${target}`
       );
 
       if (!res.ok) throw new Error("Shipment not found");
@@ -198,7 +210,7 @@ export default function Tracking() {
              placeholder-neutral-500 transition outline-none"
         />
         <button
-          onClick={handleTrack}
+          onClick={() => handleTrack()}
           disabled={loading}
           className="px-6 py-3 bg-white text-black rounded-full font-semibold hover:bg-neutral-200 disabled:opacity-60"
         >

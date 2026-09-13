@@ -177,7 +177,7 @@ const fieldInput = (hasError: boolean) =>
   }`;
 
 const selectableCard = (active: boolean) =>
-  `flex items-start gap-3 rounded-xl border px-4 py-3.5 text-left transition-all ${
+  `flex items-start gap-4 rounded-xl border px-5 py-4 text-left transition-all ${
     active
       ? "border-neutral-900 bg-neutral-900 text-white"
       : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
@@ -907,9 +907,9 @@ function ReviewRow({ label, value }: { label: string; value: React.ReactNode }) 
 
 function Tri({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4">
-      <dt className="text-xs text-neutral-500">{label}</dt>
-      <dd className="truncate text-right text-xs font-medium text-neutral-900">{value}</dd>
+    <div className="flex items-start justify-between gap-6">
+      <dt className="pt-0.5 text-xs text-neutral-500">{label}</dt>
+      <dd className="min-w-0 text-right text-xs font-medium text-neutral-900">{value}</dd>
     </div>
   );
 }
@@ -1519,26 +1519,28 @@ export default function CreateShipment() {
                     title="Service Selection"
                     hint="Choose a delivery speed and transit time"
                   >
-                    <div className="grid gap-4 sm:grid-cols-[240px_1fr]">
-                      <Field label="Ship date">
-                        <input
-                          type="date"
-                          min={minDate}
-                          value={shipDate}
-                          onChange={(e) => setShipDate(e.target.value)}
-                          className={fieldInput(false)}
-                        />
-                      </Field>
-                      <div className="flex items-end gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-sm text-neutral-500">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                      <div className="sm:w-56 sm:shrink-0">
+                        <Field label="Ship date">
+                          <input
+                            type="date"
+                            min={minDate}
+                            value={shipDate}
+                            onChange={(e) => setShipDate(e.target.value)}
+                            className={fieldInput(false)}
+                          />
+                        </Field>
+                      </div>
+                      <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-sm text-neutral-500">
                         <CalendarDays size={16} className="shrink-0" />
-                        Estimated delivery:{" "}
-                        <span className="font-semibold text-neutral-900">
+                        <span className="whitespace-nowrap">Estimated delivery:</span>
+                        <span className="ml-auto text-right font-semibold text-neutral-900">
                           {selectedService ? deliveryDate(selectedService.days, isGroundService(selectedService.id)) : "—"}
                         </span>
                       </div>
                     </div>
 
-                    <div role="radiogroup" aria-label="Delivery service" className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <div role="radiogroup" aria-label="Delivery service" className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
                       {SERVICES.map((svc) => {
                         const active = serviceId === svc.id;
                         const Icon = svc.icon;
@@ -1565,7 +1567,7 @@ export default function CreateShipment() {
                             </span>
                             <span className="min-w-0 flex-1">
                               <span className="flex items-center justify-between gap-2">
-                                <span className="truncate text-sm font-semibold">{svc.name}</span>
+                                <span className="break-words text-sm font-semibold leading-snug">{svc.name}</span>
                                 <span className={`text-sm font-semibold ${active ? "text-white" : "text-neutral-900"}`}>
                                   {money(svc.price)}
                                 </span>
@@ -1955,9 +1957,9 @@ export default function CreateShipment() {
             {/* ── Order summary (steps 2–5) ───────────────────────────────── */}
             {step >= 1 && (
               <aside className="hidden lg:block">
-                <div className="sticky top-24 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+                <div className="sticky top-24 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
                   <h3 className="text-sm font-semibold text-neutral-900">Order Summary</h3>
-                  <dl className="mt-4 space-y-3">
+                  <dl className="mt-5 space-y-4">
                     <Tri label="From" value={originLabel || "—"} />
                     <Tri label="To" value={shipTo.street || "—"} />
                     <Tri
@@ -1971,20 +1973,20 @@ export default function CreateShipment() {
                       <Tri label="Est. delivery" value={deliveryDate(selectedService.days, isGroundService(selectedService.id))} />
                     )}
                   </dl>
-                  <div className="mt-4 border-t border-neutral-200 pt-4">
-                    <div className="flex items-center justify-between text-xs text-neutral-500">
+                  <div className="mt-5 border-t border-neutral-200 pt-5">
+                    <div className="flex items-center justify-between gap-6 text-xs text-neutral-500">
                       <span>Subtotal</span>
                       <span className="font-medium text-neutral-900">
                         {selectedService ? money(selectedService.price) : "—"}
                       </span>
                     </div>
                     {insuranceFee > 0 && (
-                      <div className="mt-1.5 flex items-center justify-between text-xs text-neutral-500">
+                      <div className="mt-2 flex items-center justify-between gap-6 text-xs text-neutral-500">
                         <span>Insurance</span>
                         <span className="font-medium text-neutral-900">{money(insuranceFee)}</span>
                       </div>
                     )}
-                    <div className="mt-2 flex items-center justify-between text-sm font-semibold text-neutral-900">
+                    <div className="mt-3 flex items-center justify-between gap-6 text-sm font-semibold text-neutral-900">
                       <span>Total</span>
                       <span>{money(total)}</span>
                     </div>
