@@ -1,11 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Truck,
-  Snowflake,
-  Container,
-  Boxes,
-  Layers,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
@@ -58,6 +53,18 @@ const departedAtOf = (s: Shipment): string | undefined =>
   s.history?.[0]?.date;
 
 const ITEMS_PER_PAGE = 10;
+
+// Truck type → local truck photo/icon in /public/truck.
+const TRUCK_IMAGES: Record<string, string> = {
+  "Dry Van": "/truck/dryvan.png",
+  Reefer: "/truck/reefer.png",
+  Flatbed: "/truck/flatbed.png",
+  "Box Truck": "/truck/boxtruck.png",
+  "Step Deck": "/truck/step_deck.png",
+};
+
+const truckImageOf = (type?: string): string =>
+  TRUCK_IMAGES[type ?? ""] ?? "/truck/dryvan.png";
 
 // Pick a concise label from a full address string (e.g. "1234 Harbor Blvd,
 // Suite 300, California" → "California"). Falls back to the trailing segment,
@@ -121,33 +128,28 @@ const isHistoryShipment = (s: Shipment, live?: PlaneProgressEntry): boolean => {
 const getStatusClasses = (status: string) => {
   switch (status) {
     case "Delivered":
-      return "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30";
+      return "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
     case "In Transit":
-      return "bg-blue-50 text-blue-700 border border-blue-200";
+      return "bg-blue-500/15 text-blue-400 border border-blue-500/30";
     case "Undelivered":
-      return "bg-red-50 text-red-600 border border-red-200";
+      return "bg-red-500/15 text-red-400 border border-red-500/30";
     case "Return":
-      return "bg-sky-50 text-sky-700 border border-sky-200";
+      return "bg-sky-500/15 text-sky-400 border border-sky-500/30";
     case "Closed":
-      return "bg-neutral-100 text-neutral-500 border border-neutral-200";
+      return "bg-white/5 text-[#A1A1AA] border border-[#27272A]";
     default:
-      return "bg-neutral-50 text-neutral-600 border border-neutral-200";
+      return "bg-white/5 text-[#A1A1AA] border border-[#27272A]";
   }
 };
 
-const TRUCK_ICONS: Record<string, typeof Truck> = {
-  "Dry Van": Boxes,
-  Reefer: Snowflake,
-  Flatbed: Container,
-  "Step Deck": Layers,
-  "Box Truck": Truck,
-};
-
 function TruckTypeBadge({ truckType }: { truckType?: string }) {
-  const Icon = TRUCK_ICONS[truckType ?? ""] ?? Truck;
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-50 px-2 py-1 text-xs font-medium text-neutral-600">
-      <Icon size={13} />
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-[#27272A] bg-[#18181B] px-2 py-1 text-xs font-medium text-[#A1A1AA]">
+      <img
+        src={truckImageOf(truckType)}
+        alt={truckType || "Dry Van"}
+        className="h-4 w-5 object-contain"
+      />
       {truckType || "Dry Van"}
     </span>
   );
@@ -165,6 +167,19 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+// Flag icon next to an origin/destination state or city name.
+function StateFlag({ location }: { location?: string }) {
+  const src = flagSrc(location);
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt={location}
+      className="h-3 w-4 rounded-[2px] object-cover"
+    />
+  );
+}
+
 /* ─── Shipment History (compact sidebar card) ─────────────────────── */
 function HistoryCard({
   s,
@@ -178,29 +193,31 @@ function HistoryCard({
   const originLabel = conciseLocation(s.origin);
   const destLabel = conciseLocation(s.destination);
   return (
-    <li className="flex flex-col gap-2 rounded-lg border border-[#E5E7EB] bg-white p-3 text-neutral-900 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+    <li className="flex flex-col gap-2 rounded-lg border border-[#27272A] bg-[#18181B] p-3 text-white shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
       <div className="flex items-center justify-between gap-2">
         <TruckTypeBadge truckType={s.truckType} />
-        <span className="text-[11px] text-neutral-400">
+        <span className="text-[11px] text-[#9CA3AF]">
           {formatDate(s.expectedDelivery)}
         </span>
       </div>
-      <p className="text-sm font-semibold">{s.trackingId}</p>
-      <p className="flex items-center gap-1 text-xs text-neutral-500">
-        <span className="truncate">{originLabel}</span>
-        <ArrowRight size={11} className="shrink-0 text-neutral-400" />
-        <span className="truncate">{destLabel}</span>
+      <p className="text-sm font-semibold text-white">{s.trackingId}</p>
+      <p className="flex items-center gap-1.5 text-xs text-[#A1A1AA]">
+        <StateFlag location={s.origin} />
+        <span className="truncate text-white">{originLabel}</span>
+        <ArrowRight size={11} className="shrink-0 text-[#52525B]" />
+        <StateFlag location={s.destination} />
+        <span className="truncate text-white">{destLabel}</span>
       </p>
       <div className="mt-1 flex items-center gap-2">
         <button
           onClick={onView}
-          className="flex-1 rounded-md border border-neutral-200 px-2 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:border-neutral-400 hover:text-neutral-900"
+          className="flex-1 rounded-md border border-[#27272A] bg-[#121212] px-2 py-1.5 text-xs font-medium text-[#D4D4D8] transition-colors hover:border-[#3F3F46] hover:text-white"
         >
           View Details
         </button>
         <button
           onClick={onRebook}
-          className="flex-1 rounded-md bg-neutral-900 px-2 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black"
+          className="flex-1 rounded-md bg-white px-2 py-1.5 text-xs font-semibold text-black transition-colors hover:bg-neutral-200"
         >
           Rebook
         </button>
@@ -214,12 +231,10 @@ function ActiveOrderCard({
   s,
   live,
   onTrack,
-  onRebook,
 }: {
   s: Shipment;
   live?: PlaneProgressEntry;
   onTrack: () => void;
-  onRebook: () => void;
 }) {
   const status = statusOf(s, live);
   const originLabel = conciseLocation(s.origin);
@@ -227,41 +242,38 @@ function ActiveOrderCard({
   const displayLoc = live
     ? nearestLocationOf(live.lat, live.lng)
     : s.lastLocation;
-  const Icon = TRUCK_ICONS[s.truckType ?? ""] ?? Truck;
   const lastEvent = s.history?.[s.history.length - 1];
 
   return (
-    <article
-      className="mb-5 rounded-lg border border-[#E5E7EB] bg-white text-neutral-900 shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-    >
-      {/* Metadata header */}
-      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-t-lg bg-[#F6F8FA] px-5 py-3">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-neutral-500">
+    <article className="mb-5 rounded-lg border border-[#27272A] bg-[#121212] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
+      {/* Metadata header bar */}
+      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-t-lg border-b border-[#27272A] bg-[#1F1F23] px-5 py-3">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs">
           <span>
-            <span className="block text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+            <span className="block text-[10px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
               Order placed
             </span>
-            <span className="font-medium text-neutral-700">
+            <span className="font-medium text-white">
               {formatDate(s.createdAt)}
             </span>
           </span>
           <span>
-            <span className="block text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+            <span className="block text-[10px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
               Total / weight
             </span>
-            <span className="font-medium text-neutral-700">—</span>
+            <span className="font-medium text-white">—</span>
           </span>
           <span>
-            <span className="block text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+            <span className="block text-[10px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
               Ship to
             </span>
-            <span className="font-medium text-neutral-700">{destLabel}</span>
+            <span className="font-medium text-white">{destLabel}</span>
           </span>
           <span>
-            <span className="block text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+            <span className="block text-[10px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
               Order / AWB
             </span>
-            <span className="font-mono font-medium text-neutral-700">
+            <span className="font-mono font-medium text-white">
               {s.trackingId}
             </span>
           </span>
@@ -269,13 +281,13 @@ function ActiveOrderCard({
         <div className="flex items-center gap-4 text-sm">
           <button
             onClick={onTrack}
-            className="font-semibold text-neutral-900 transition-colors hover:text-black"
+            className="font-semibold text-white transition-colors hover:text-neutral-300"
           >
             View details
           </button>
           <button
             onClick={onTrack}
-            className="font-medium text-neutral-500 transition-colors hover:text-neutral-800"
+            className="font-medium text-[#A1A1AA] transition-colors hover:text-white"
           >
             Invoice
           </button>
@@ -283,78 +295,78 @@ function ActiveOrderCard({
       </header>
 
       {/* Body: shipment info + right action area */}
-      <div className="flex flex-col gap-5 px-5 py-4 lg:flex-row lg:items-start">
-        <div className="flex min-w-0 flex-1 gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-500">
-            <Icon size={26} />
+      <div className="flex flex-col gap-5 px-5 py-4 lg:grid lg:grid-cols-[minmax(0,1fr)_10rem] lg:items-start">
+        <div className="flex min-w-0 gap-4">
+          {/* Truck photo icon */}
+          <div className="h-16 w-24 shrink-0 overflow-hidden rounded-md border border-[#27272A] bg-[#18181B]">
+            <img
+              src={truckImageOf(s.truckType)}
+              alt={s.truckType || "Dry Van truck"}
+              className="h-full w-full object-contain"
+            />
           </div>
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={status} />
-              <span className="text-xs text-neutral-500">{s.trackingId}</span>
+              <span className="font-mono text-xs text-[#A1A1AA]">
+                {s.trackingId}
+              </span>
             </div>
 
-            {/* Route: prominent & easy to scan */}
-            <p className="mt-2 text-[15px] font-semibold leading-snug">
-              {originLabel}
-              <span className="mx-2 inline-flex items-center gap-0.5 text-neutral-400">
+            {/* Route: flags + prominent white state names */}
+            <p className="mt-2 inline-flex items-center text-[15px] font-semibold leading-snug">
+              <StateFlag location={s.origin} />
+              <span className="text-white">{originLabel}</span>
+              <span className="mx-2 text-[#52525B]">
                 <ArrowRight size={14} />
               </span>
-              {destLabel}
+              <StateFlag location={s.destination} />
+              <span className="text-white">{destLabel}</span>
             </p>
 
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[#A1A1AA]">
               <TruckTypeBadge truckType={s.truckType} />
               <span>
                 Est. delivery:{" "}
-                <span className="font-semibold text-neutral-800">
+                <span className="font-semibold text-white">
                   {formatDate(s.expectedDelivery)}
                 </span>
               </span>
               <span className="inline-flex items-center gap-1">
-                {flagSrc(displayLoc) ? (
-                  <img
-                    src={flagSrc(displayLoc)}
-                    alt={displayLoc}
-                    className="h-3 w-4 rounded-[2px] object-cover"
-                  />
-                ) : null}
-                <span className="capitalize">{displayLoc || "—"}</span>
+                <StateFlag location={displayLoc} />
+                <span className="capitalize text-[#A1A1AA]">
+                  {displayLoc || "—"}
+                </span>
               </span>
             </div>
 
             {lastEvent && (
-              <p className="mt-2 text-xs text-neutral-500">
-                Last update: {lastEvent.status} · {conciseLocation(lastEvent.location)}
+              <p className="mt-2 text-xs text-[#A1A1AA]">
+                Last update: {lastEvent.status} ·{" "}
+                {conciseLocation(lastEvent.location)}
               </p>
             )}
 
             <div className="mt-3">
-              <StageStepper status={status} theme="light" live={live} />
+              <StageStepper status={status} theme="dark" live={live} />
             </div>
           </div>
         </div>
 
         {/* Right action area */}
-        <div className="flex shrink-0 flex-col gap-2 lg:w-40">
+        <div className="flex shrink-0 flex-col gap-2">
           <button
             onClick={onTrack}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-neutral-900 text-sm font-semibold text-white transition-colors hover:bg-black"
+            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-white text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
           >
             Track Package
           </button>
           <button
             onClick={onTrack}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-400 hover:bg-neutral-50"
+            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#27272A] bg-[#18181B] text-sm font-medium text-[#D4D4D8] transition-colors hover:border-[#3F3F46] hover:text-white"
           >
             View Receipt
-          </button>
-          <button
-            onClick={onRebook}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-400 hover:bg-neutral-50"
-          >
-            Buy It Again
           </button>
         </div>
       </div>
@@ -381,7 +393,7 @@ export default function Shipments() {
 
   useEffect(() => {
     setLoading(true);
- fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shipments`)
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shipments`)
       .then(async (res) => {
         if (!res.ok) {
           const text = await res.text();
@@ -440,7 +452,8 @@ export default function Shipments() {
   const handleSortKey = (key: keyof Shipment) => {
     setSortConfig((prev) => ({
       key,
-      direction: prev?.key === key ? (prev.direction === "asc" ? "desc" : "asc") : "asc",
+      direction:
+        prev?.key === key ? (prev.direction === "asc" ? "desc" : "asc") : "asc",
     }));
   };
 
@@ -456,7 +469,7 @@ export default function Shipments() {
         </h2>
         <div className="space-y-5 animate-pulse">
           {[...Array(3)].map((_, idx) => (
-            <div key={idx} className="h-40 rounded-lg bg-neutral-800/60 w-full" />
+            <div key={idx} className="h-40 rounded-lg bg-[#18181B] w-full" />
           ))}
         </div>
       </div>
@@ -472,48 +485,20 @@ export default function Shipments() {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto text-white">
+    <div className="bg-[#09090B] p-8 max-w-7xl mx-auto text-white">
       <FlightSimulationDriver flights={liveFlights} />
 
       <h2 className="text-3xl font-bold mb-8 text-center text-white">
         My Orders
       </h2>
 
-      <div className="flex items-start gap-6">
-        {/* ── Shipment History sidebar ───────────────────────────────── */}
-        <aside className="w-72 shrink-0 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
-            <History size={15} className="text-neutral-400" />
-            Shipment History
-            <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-neutral-300">
-              {historyShipments.length}
-            </span>
-          </div>
-
-          {historyShipments.length ? (
-            <ul className="max-h-[calc(100vh-14rem)] space-y-2 overflow-y-auto pr-1">
-              {historyShipments.map((s) => (
-                <HistoryCard
-                  key={s._id || s.trackingId}
-                  s={s}
-                  onView={() => goTrack(s)}
-                  onRebook={goRebook}
-                />
-              ))}
-            </ul>
-          ) : (
-            <p className="py-6 text-center text-xs text-neutral-500">
-              Completed shipments will appear here.
-            </p>
-          )}
-        </aside>
-
-        {/* ── Active Orders ──────────────────────────────────────────── */}
+      <div className="flex flex-col items-start gap-6 lg:flex-row">
+        {/* ── Active Orders (left / main) ────────────────────────────── */}
         <section className="min-w-0 flex-1">
           <div className="mb-4 flex items-center gap-4">
             <h3 className="text-lg font-semibold text-white">
               Active Orders
-              <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-neutral-300">
+              <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-[#A1A1AA]">
                 {activeShipments.length}
               </span>
             </h3>
@@ -526,7 +511,7 @@ export default function Shipments() {
                   if (key) handleSortKey(key);
                   else setSortConfig(null);
                 }}
-                className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm text-white outline-none focus:border-white"
+                className="rounded-lg border border-[#27272A] bg-[#121212] px-3 py-1.5 text-sm text-white outline-none focus:border-[#3F3F46]"
               >
                 <option value="">Sort by…</option>
                 <option value="trackingId">AWB</option>
@@ -534,12 +519,12 @@ export default function Shipments() {
                 <option value="expectedDelivery">Delivery date</option>
               </select>
               <button
-                onClick={() =>
-                  sortConfig && handleSortKey(sortConfig.key)
-                }
+                onClick={() => sortConfig && handleSortKey(sortConfig.key)}
                 disabled={!sortConfig}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-900 text-white transition-colors hover:border-white disabled:cursor-not-allowed disabled:opacity-40"
-                title={sortConfig?.direction === "asc" ? "Ascending" : "Descending"}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#27272A] bg-[#121212] text-white transition-colors hover:border-[#3F3F46] disabled:cursor-not-allowed disabled:opacity-40"
+                title={
+                  sortConfig?.direction === "asc" ? "Ascending" : "Descending"
+                }
               >
                 {sortConfig?.direction === "asc" ? (
                   <ArrowUp size={15} />
@@ -561,7 +546,6 @@ export default function Shipments() {
                       s={s}
                       live={live}
                       onTrack={() => goTrack(s)}
-                      onRebook={goRebook}
                     />
                   );
                 })}
@@ -571,32 +555,62 @@ export default function Shipments() {
                 <button
                   onClick={handlePrev}
                   disabled={currentPage === 1}
-                  className="inline-flex items-center gap-1 rounded-full border border-neutral-700 px-4 py-2 text-sm text-white transition-colors hover:border-white disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex items-center gap-1 rounded-full border border-[#27272A] bg-[#121212] px-4 py-2 text-sm text-white transition-colors hover:border-[#3F3F46] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeft size={15} /> Prev
                 </button>
-                <span className="text-sm text-neutral-400">
+                <span className="text-sm text-[#A1A1AA]">
                   Page {currentPage} of {totalPages || 1}
                 </span>
                 <button
                   onClick={handleNext}
                   disabled={currentPage === totalPages}
-                  className="inline-flex items-center gap-1 rounded-full border border-neutral-700 px-4 py-2 text-sm text-white transition-colors hover:border-white disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex items-center gap-1 rounded-full border border-[#27272A] bg-[#121212] px-4 py-2 text-sm text-white transition-colors hover:border-[#3F3F46] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next <ChevronRight size={15} />
                 </button>
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900/60 px-6 py-14 text-center">
-              <Package size={26} className="mb-2 text-neutral-600" />
-              <p className="text-sm font-semibold text-white">No active orders</p>
-              <p className="mt-1 text-xs text-neutral-500">
+            <div className="flex flex-col items-center justify-center rounded-xl border border-[#27272A] bg-[#121212] px-6 py-14 text-center">
+              <Package size={26} className="mb-2 text-[#52525B]" />
+              <p className="text-sm font-semibold text-white">
+                No active orders
+              </p>
+              <p className="mt-1 text-xs text-[#A1A1AA]">
                 Shipments in motion will show up here.
               </p>
             </div>
           )}
         </section>
+
+        {/* ── Shipment History sidebar (right) ───────────────────────── */}
+        <aside className="w-72 shrink-0 rounded-xl border border-[#27272A] bg-[#121212] p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+            <History size={15} className="text-[#A1A1AA]" />
+            Shipment History
+            <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-[#A1A1AA]">
+              {historyShipments.length}
+            </span>
+          </div>
+
+          {historyShipments.length ? (
+            <ul className="max-h-[calc(100vh-14rem)] space-y-2 overflow-y-auto pr-1">
+              {historyShipments.map((s) => (
+                <HistoryCard
+                  key={s._id || s.trackingId}
+                  s={s}
+                  onView={() => goTrack(s)}
+                  onRebook={goRebook}
+                />
+              ))}
+            </ul>
+          ) : (
+            <p className="py-6 text-center text-xs text-[#A1A1AA]">
+              Completed shipments will appear here.
+            </p>
+          )}
+        </aside>
       </div>
     </div>
   );
