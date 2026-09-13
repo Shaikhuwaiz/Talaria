@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 type Props = {
   src: string;
@@ -60,16 +61,20 @@ export default function TruckModelViewer({
     if (!el) return;
 
     const scene = new THREE.Scene();
-    scene.add(new THREE.AmbientLight(0xffffff, 1.6));
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x2a2a2e, 0.55));
+    scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x2a2a2e, 0.85));
 
-    const key = new THREE.DirectionalLight(0xffffff, 2.4);
+    const key = new THREE.DirectionalLight(0xffffff, 2.6);
     key.position.set(4, 6, 5);
     scene.add(key);
 
-    const rim = new THREE.DirectionalLight(0xffffff, 1.1);
+    const rim = new THREE.DirectionalLight(0xffffff, 1.4);
     rim.position.set(-5, 2, -4);
     scene.add(rim);
+
+    const fill = new THREE.DirectionalLight(0xffffff, 1.0);
+    fill.position.set(0, 1, 6);
+    scene.add(fill);
 
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 1000);
     camera.position.set(5, 3.2, 5.5);
@@ -77,8 +82,15 @@ export default function TruckModelViewer({
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
     renderer.domElement.style.display = "block";
     el.appendChild(renderer.domElement);
+
+    // Room light probe so the fully-metallic tripo3d PBR materials have
+    // something to reflect (without it they render near-black on dark bg).
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -118,6 +130,7 @@ export default function TruckModelViewer({
       () => {
         if (cancelled) return;
         failedRef.current = true;
+        console.error(`TruckModelViewer: failed to load ${src}`);
         setReady(true);
       }
     );

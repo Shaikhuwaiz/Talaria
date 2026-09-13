@@ -21,19 +21,22 @@ export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
             className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${card}`}
           >
             <div className="relative aspect-[16/10] overflow-hidden bg-neutral-900">
-              {t.model ? (
+              <img
+                src={t.img}
+                alt={`${t.name} trailer`}
+                loading="lazy"
+                className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 ${
+                  t.model
+                    ? "opacity-80 group-hover:opacity-0"
+                    : "opacity-80 group-hover:scale-105 group-hover:opacity-95"
+                }`}
+              />
+              {t.model && (
                 <TruckModelViewer
                   src={t.model}
                   poster={t.img}
                   alt={`${t.name} trailer 3D view`}
-                  className="relative h-full w-full"
-                />
-              ) : (
-                <img
-                  src={t.img}
-                  alt={`${t.name} trailer`}
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover opacity-80 transition-all duration-500 group-hover:scale-105 group-hover:opacity-95"
+                  className="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                 />
               )}
               <span
