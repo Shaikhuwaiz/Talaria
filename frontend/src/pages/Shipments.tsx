@@ -21,6 +21,16 @@ import { isWarehouseOrigin } from "../utils/warehouses";
 import { flagSrc } from "../utils/flags";
 import StageStepper from "../components/StageStepper";
 
+interface ContactInfo {
+  name?: string;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+}
+
 interface Shipment {
   _id?: string;
   trackingId: string;
@@ -31,6 +41,9 @@ interface Shipment {
   lastLocation: string;
   truckType?: string;
   createdAt?: string;
+  weight?: number;
+  sender?: ContactInfo;
+  recipient?: ContactInfo;
   history?: { location: string; status?: string; date?: string; details?: string }[];
   originMode?: string;
 }
@@ -145,11 +158,11 @@ const getStatusClasses = (status: string) => {
 
 function TruckTypeBadge({ truckType }: { truckType?: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-[#27272A] bg-[#18181B] px-2 py-1 text-xs font-medium text-[#A1A1AA]">
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#A1A1AA]">
       <img
         src={truckImageOf(truckType)}
         alt={truckType || "Dry Van"}
-        className="h-4 w-5 object-contain"
+        className="h-4 w-5 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
       />
       {truckType || "Dry Van"}
     </span>
@@ -232,10 +245,12 @@ function ActiveOrderCard({
   s,
   live,
   onTrack,
+  onInvoice,
 }: {
   s: Shipment;
   live?: PlaneProgressEntry;
   onTrack: () => void;
+  onInvoice: () => void;
 }) {
   const status = statusOf(s, live);
   const originLabel = conciseLocation(s.origin);
@@ -244,6 +259,7 @@ function ActiveOrderCard({
     ? nearestLocationOf(live.lat, live.lng)
     : s.lastLocation;
   const lastEvent = s.history?.[s.history.length - 1];
+  const contactName = s.recipient?.contactName || s.recipient?.name || "—";
 
   return (
     <article className="mb-5 rounded-lg border border-[#27272A] bg-[#121212] text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
@@ -260,38 +276,40 @@ function ActiveOrderCard({
           </span>
           <span>
             <span className="block text-[10px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
-              Total / weight
+              Total weight
             </span>
-            <span className="font-medium text-white">—</span>
+            <span className="font-medium text-white">
+              {s.weight ? `${s.weight} kg` : "—"}
+            </span>
           </span>
           <span>
             <span className="block text-[10px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
-              Ship to
+              Contact name
             </span>
-            <span className="font-medium text-white">{destLabel}</span>
-          </span>
-          <span>
-            <span className="block text-[10px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
-              Order / AWB
-            </span>
-            <span className="font-mono font-medium text-white">
-              {s.trackingId}
-            </span>
+            <span className="font-medium text-white">{contactName}</span>
           </span>
         </div>
-        <div className="flex items-center gap-4 text-sm">
-          <button
-            onClick={onTrack}
-            className="font-semibold text-white transition-colors hover:text-neutral-300"
-          >
-            View details
-          </button>
-          <button
-            onClick={onTrack}
-            className="font-medium text-[#A1A1AA] transition-colors hover:text-white"
-          >
-            Invoice
-          </button>
+        <div className="flex flex-col items-end">
+          <div className="flex items-center gap-4 text-sm">
+            <button
+              onClick={onTrack}
+              className="font-semibold text-white transition-colors hover:text-neutral-300"
+            >
+              View details
+            </button>
+            <button
+              onClick={onInvoice}
+              className="font-medium text-[#A1A1AA] transition-colors hover:text-white"
+            >
+              Invoice
+            </button>
+          </div>
+          <span className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
+            Order / AWB
+          </span>
+          <span className="font-mono text-sm font-medium text-white">
+            {s.trackingId}
+          </span>
         </div>
       </header>
 
@@ -299,11 +317,11 @@ function ActiveOrderCard({
       <div className="flex flex-col gap-5 px-5 py-4 lg:grid lg:grid-cols-[minmax(0,1fr)_10rem] lg:items-start">
         <div className="flex min-w-0 gap-4">
           {/* Truck photo icon */}
-          <div className="h-16 w-24 shrink-0 overflow-hidden rounded-md border border-[#27272A] bg-[#18181B]">
+          <div className="h-16 w-20 shrink-0">
             <img
               src={truckImageOf(s.truckType)}
               alt={s.truckType || "Dry Van truck"}
-              className="h-full w-full object-contain"
+              className="h-full w-full object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
             />
           </div>
 
@@ -460,6 +478,8 @@ export default function Shipments() {
 
   const goTrack = (s: Shipment) =>
     navigate("/tracking", { state: { trackingId: s.trackingId } });
+  const goInvoice = (s: Shipment) =>
+    navigate(`/orders/invoice/${s.trackingId}`);
   const goRebook = () => navigate("/orders/create");
 
   if (loading) {
@@ -547,6 +567,7 @@ export default function Shipments() {
                       s={s}
                       live={live}
                       onTrack={() => goTrack(s)}
+                      onInvoice={() => goInvoice(s)}
                     />
                   );
                 })}

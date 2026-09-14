@@ -1134,6 +1134,25 @@ export default function CreateShipment() {
           expectedDelivery: eta.toISOString(),
           truckType: truckType,
           originMode: originMode,
+          weight: parcel.weight ? Number(parcel.weight) : 0,
+          sender: {
+            name: shipFrom.fullName,
+            contactName: shipFrom.contactName,
+            email: shipFrom.email,
+            phone: shipFrom.phone,
+            street: shipFrom.street,
+            city: shipFrom.city,
+            state: shipFrom.state,
+          },
+          recipient: {
+            name: shipTo.fullName,
+            contactName: shipTo.contactName,
+            email: shipTo.email,
+            phone: shipTo.phone,
+            street: shipTo.street,
+            city: shipTo.city,
+            state: shipTo.state,
+          },
         }),
       });
       if (!res.ok) throw new Error(`Failed to create shipment (${res.status})`);

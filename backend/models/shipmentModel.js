@@ -21,6 +21,19 @@ const movementSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const contactSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: "" },
+    contactName: { type: String, default: "" },
+    email: { type: String, default: "" },
+    phone: { type: String, default: "" },
+    street: { type: String, default: "" },
+    city: { type: String, default: "" },
+    state: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const shipmentSchema = new mongoose.Schema(
   {
     trackingId: { type: String, required: true, unique: true },
@@ -35,7 +48,7 @@ const shipmentSchema = new mongoose.Schema(
     expectedDelivery: { type: Date, required: true },
     truckType: {
       type: String,
-      enum: ["Dry Van", "Flatbed", "Reefer", "Step Deck", "Box Truck"],
+      enum: ["Dry Van", "Flatbed", "Reefer", "Step Deck", "Box Truck", "Logging Truck"],
       default: "Dry Van",
     },
     originMode: {
@@ -43,6 +56,11 @@ const shipmentSchema = new mongoose.Schema(
       enum: ["warehouse", "custom"],
       default: "custom",
     },
+
+    // ✅ Billing + contact info captured at booking
+    weight: { type: Number, default: 0 },
+    sender: { type: contactSchema, default: () => ({}) },
+    recipient: { type: contactSchema, default: () => ({}) },
 
     // ✅ History is INSIDE schema now
     history: {

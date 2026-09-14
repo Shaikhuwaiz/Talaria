@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import AppLayout from "./layouts/AppLayout";
 import Shipments from "./pages/Shipments";
 import CreateShipment from "./pages/CreateShipment";
+import Invoice from "./pages/Invoice";
 import Tracking from "./pages/Tracking";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -37,6 +38,7 @@ export default function App() {
         >
           <Route index element={<Shipments />} />
           <Route path="create" element={<CreateShipment />} />
+          <Route path="invoice/:trackingId" element={<Invoice />} />
         </Route>
         <Route
           path="/tracking"
