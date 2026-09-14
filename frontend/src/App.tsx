@@ -38,7 +38,8 @@ export default function App() {
         >
           <Route index element={<Shipments />} />
           <Route path="create" element={<CreateShipment />} />
-          <Route path="invoice/:trackingId" element={<Invoice />} />
+          <Route path="invoice/:trackingId" element={<Invoice variant="invoice" />} />
+          <Route path="receipt/:trackingId" element={<Invoice variant="receipt" />} />
         </Route>
         <Route
           path="/tracking"

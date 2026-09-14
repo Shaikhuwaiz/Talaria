@@ -61,7 +61,12 @@ const lineItems = (s: Shipment) => {
   return items;
 };
 
-export default function Invoice() {
+export default function Invoice({
+  variant = "invoice",
+}: {
+  variant?: "invoice" | "receipt";
+}) {
+  const receipt = variant === "receipt";
   const { trackingId } = useParams();
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -150,19 +155,24 @@ export default function Invoice() {
         <div className="overflow-hidden rounded-xl border border-[#27272A] bg-white text-neutral-900 shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
           {/* Header */}
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-neutral-200 bg-neutral-50 px-6 py-5">
-            <div className="flex items-center gap-3">
-              <img src={talariaLogo} alt="Talaria" className="h-10 w-10" />
+            <div className="flex items-start gap-3">
+              <img src={talariaLogo} alt="Talaria" className="h-12 w-12" />
               <div>
                 <p className="text-lg font-semibold tracking-tight text-neutral-900">
                   Talaria <span className="text-neutral-500">Freight</span>
                 </p>
                 <p className="text-xs text-neutral-500">
-                  48-state coverage · live tracked
+                  Safe parcel &amp; freight deliveries · 48-state coverage · live tracked
+                </p>
+                <p className="mt-1 text-[11px] text-neutral-400">
+                  support@talaria.co.in · talaria.co.in · Swift, secure &amp; tamper-free
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold tracking-tight">INVOICE</p>
+              <p className="text-2xl font-bold tracking-tight">
+                {receipt ? "RECEIPT" : "INVOICE"}
+              </p>
               <p className="mt-1 font-mono text-sm text-neutral-700">
                 {shipment.trackingId}
               </p>
@@ -257,12 +267,13 @@ export default function Invoice() {
               </div>
             </div>
             <div className="mt-3 flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-              <CheckCircle2 size={14} /> Payment status: PAID
+              <CheckCircle2 size={14} /> {receipt ? "Amount paid" : "Payment status"}: PAID
             </div>
           </div>
 
           <div className="border-t border-neutral-200 px-6 py-4 text-center text-xs text-neutral-400">
-            Invoice for shipment {shipment.trackingId} · Estimated delivery{" "}
+            {receipt ? "Receipt" : "Invoice"} for shipment {shipment.trackingId} ·
+            Estimated delivery{" "}
             {shipment.expectedDelivery
               ? new Date(shipment.expectedDelivery).toLocaleDateString("en-US")
               : "—"}

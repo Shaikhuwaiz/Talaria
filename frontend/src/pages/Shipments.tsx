@@ -198,11 +198,9 @@ function StateFlag({ location }: { location?: string }) {
 function HistoryCard({
   s,
   onView,
-  onRebook,
 }: {
   s: Shipment;
   onView: () => void;
-  onRebook: () => void;
 }) {
   const originLabel = conciseLocation(s.origin);
   const destLabel = conciseLocation(s.destination);
@@ -216,10 +214,10 @@ function HistoryCard({
       </div>
       <p className="text-sm font-semibold text-white">{s.trackingId}</p>
       <p className="flex items-center gap-1.5 text-xs text-[#A1A1AA]">
-        <StateFlag location={s.origin} />
+        <StateFlag location={originLabel} />
         <span className="truncate text-white">{originLabel}</span>
         <ArrowRight size={11} className="shrink-0 text-[#52525B]" />
-        <StateFlag location={s.destination} />
+        <StateFlag location={destLabel} />
         <span className="truncate text-white">{destLabel}</span>
       </p>
       <div className="mt-1 flex items-center gap-2">
@@ -228,12 +226,6 @@ function HistoryCard({
           className="flex-1 rounded-md border border-[#27272A] bg-[#121212] px-2 py-1.5 text-xs font-medium text-[#D4D4D8] transition-colors hover:border-[#3F3F46] hover:text-white"
         >
           View Details
-        </button>
-        <button
-          onClick={onRebook}
-          className="flex-1 rounded-md bg-white px-2 py-1.5 text-xs font-semibold text-black transition-colors hover:bg-neutral-200"
-        >
-          Rebook
         </button>
       </div>
     </li>
@@ -246,11 +238,13 @@ function ActiveOrderCard({
   live,
   onTrack,
   onInvoice,
+  onReceipt,
 }: {
   s: Shipment;
   live?: PlaneProgressEntry;
   onTrack: () => void;
   onInvoice: () => void;
+  onReceipt: () => void;
 }) {
   const status = statusOf(s, live);
   const originLabel = conciseLocation(s.origin);
@@ -374,7 +368,7 @@ function ActiveOrderCard({
         </div>
 
         {/* Right action area */}
-        <div className="flex shrink-0 flex-col gap-2">
+        <div className="flex shrink-0 flex-col gap-3">
           <button
             onClick={onTrack}
             className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-white text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
@@ -382,7 +376,7 @@ function ActiveOrderCard({
             Track Package
           </button>
           <button
-            onClick={onTrack}
+            onClick={onReceipt}
             className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#27272A] bg-[#18181B] text-sm font-medium text-[#D4D4D8] transition-colors hover:border-[#3F3F46] hover:text-white"
           >
             View Receipt
@@ -480,7 +474,8 @@ export default function Shipments() {
     navigate("/tracking", { state: { trackingId: s.trackingId } });
   const goInvoice = (s: Shipment) =>
     navigate(`/orders/invoice/${s.trackingId}`);
-  const goRebook = () => navigate("/orders/create");
+  const goReceipt = (s: Shipment) =>
+    navigate(`/orders/receipt/${s.trackingId}`);
 
   if (loading) {
     return (
@@ -568,6 +563,7 @@ export default function Shipments() {
                       live={live}
                       onTrack={() => goTrack(s)}
                       onInvoice={() => goInvoice(s)}
+                      onReceipt={() => goReceipt(s)}
                     />
                   );
                 })}
@@ -623,7 +619,6 @@ export default function Shipments() {
                   key={s._id || s.trackingId}
                   s={s}
                   onView={() => goTrack(s)}
-                  onRebook={goRebook}
                 />
               ))}
             </ul>
