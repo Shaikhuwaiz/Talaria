@@ -22,6 +22,7 @@ interface Shipment {
   truckType?: string;
   createdAt?: string;
   weight?: number;
+  price?: number;
   sender?: ContactInfo;
   recipient?: ContactInfo;
 }
@@ -34,29 +35,29 @@ const fullAddress = (c?: ContactInfo) =>
     ? [c.street, c.city, c.state].filter(Boolean).join(", ") || "—"
     : "—";
 
-// Itemized freight charges (derived from the shipment weight).
+// Itemized line items — uses the charge entered at booking when present,
+// otherwise falls back to an estimate for legacy shipments.
 const lineItems = (s: Shipment) => {
   const wt = s.weight || 0;
+  if (s.price && s.price > 0) {
+    return [
+      {
+        description: `Freight — ${s.truckType || "Dry Van"}${
+          wt > 0 ? ` · ${wt} kg` : ""
+        }`,
+        qty: 1,
+        rate: s.price,
+      },
+    ];
+  }
   const base = 49.0;
   const rate = 0.95;
   const items = [
-    {
-      description: `Base freight — ${s.truckType || "Dry Van"}`,
-      qty: 1,
-      rate: base,
-    },
-    {
-      description: `Fuel & dispatch`,
-      qty: 1,
-      rate: 24,
-    },
+    { description: `Base freight — ${s.truckType || "Dry Van"}`, qty: 1, rate: base },
+    { description: `Fuel & dispatch`, qty: 1, rate: 24 },
   ];
   if (wt > 0) {
-    items.splice(1, 0, {
-      description: `Weight charge (${wt} kg)`,
-      qty: wt,
-      rate,
-    });
+    items.splice(1, 0, { description: `Weight charge (${wt} kg)`, qty: wt, rate });
   }
   return items;
 };
