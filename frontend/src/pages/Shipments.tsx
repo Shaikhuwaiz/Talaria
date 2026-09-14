@@ -56,10 +56,11 @@ const ITEMS_PER_PAGE = 10;
 
 // Truck type → local truck photo/icon in /public/truck.
 const TRUCK_IMAGES: Record<string, string> = {
-  "Dry Van": "/truck/dryvan.png",
-  Reefer: "/truck/reefer.png",
-  Flatbed: "/truck/flatbed.png",
-  "Box Truck": "/truck/boxtruck.png",
+  "Dry Van": "/icons/dry_van.png",
+  Reefer: "/icons/reefer_van.png",
+  Flatbed: "/icons/flatbed_truck.png",
+  "Box Truck": "/icons/box_van.png",
+  "Logging Truck": "/icons/logged_truck.png",
   "Step Deck": "/truck/step_deck.png",
 };
 
