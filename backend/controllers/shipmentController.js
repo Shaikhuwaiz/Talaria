@@ -64,6 +64,10 @@ const createShipment = async (req, res) => {
       expectedDelivery,
       truckType: truckType || "Dry Van",
       originMode: originMode || "custom",
+      weight: Number(req.body.weight) || 0,
+      price: Number(req.body.price) || 0,
+      sender: req.body.sender || {},
+      recipient: req.body.recipient || {},
       history,
       movements,
     });

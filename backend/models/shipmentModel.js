@@ -59,6 +59,7 @@ const shipmentSchema = new mongoose.Schema(
 
     // ✅ Billing + contact info captured at booking
     weight: { type: Number, default: 0 },
+    price: { type: Number, default: 0 },
     sender: { type: contactSchema, default: () => ({}) },
     recipient: { type: contactSchema, default: () => ({}) },
 

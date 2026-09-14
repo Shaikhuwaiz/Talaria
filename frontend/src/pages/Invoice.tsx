@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Printer } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Printer } from "lucide-react";
 import talariaLogo from "../image/logo.svg";
+import { flagSrc } from "../utils/flags";
 
 interface ContactInfo {
   name?: string;
@@ -34,6 +35,51 @@ const fullAddress = (c?: ContactInfo) =>
   c
     ? [c.street, c.city, c.state].filter(Boolean).join(", ") || "—"
     : "—";
+
+// Extract the state name from a location string like "123 Main St, St Louis, Missouri".
+const locationLabel = (value?: string): string => {
+  const v = (value ?? "").trim();
+  if (!v) return v;
+  const parts = v.split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length <= 1) return v;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    if (flagSrc(part)) return part;
+  }
+  return parts[parts.length - 1];
+};
+
+const RouteFlags = ({ origin, destination }: { origin?: string; destination?: string }) => {
+  const o = locationLabel(origin);
+  const d = locationLabel(destination);
+  const oSrc = flagSrc(o);
+  const dSrc = flagSrc(d);
+  return (
+    <div className="flex items-center gap-3 text-neutral-700">
+      <span className="flex items-center gap-1.5">
+        {oSrc && (
+          <img
+            src={oSrc}
+            alt=""
+            className="h-3.5 w-5 rounded-[2px] object-cover shadow-sm"
+          />
+        )}
+        <span className="font-semibold">{o || "—"}</span>
+      </span>
+      <ArrowRight size={14} className="text-neutral-300" />
+      <span className="flex items-center gap-1.5">
+        {dSrc && (
+          <img
+            src={dSrc}
+            alt=""
+            className="h-3.5 w-5 rounded-[2px] object-cover shadow-sm"
+          />
+        )}
+        <span className="font-semibold">{d || "—"}</span>
+      </span>
+    </div>
+  );
+};
 
 // Itemized line items — uses the charge entered at booking when present,
 // otherwise falls back to an estimate for legacy shipments.
@@ -179,6 +225,15 @@ export default function Invoice({
               </p>
               <p className="text-xs text-neutral-500">Issued {issueDate}</p>
             </div>
+          </div>
+
+          {/* Route flags */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 bg-white px-6 py-3 text-xs">
+            <RouteFlags origin={shipment.origin} destination={shipment.destination} />
+            <span className="text-neutral-400">
+              {shipment.truckType || "Dry Van"}
+              {shipment.weight ? ` · ${shipment.weight} kg` : ""}
+            </span>
           </div>
 
           {/* Addresses */}

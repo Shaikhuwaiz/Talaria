@@ -69,10 +69,7 @@ const DIM_FIELDS = [
   { key: "height", label: "Height", unit: "cm" },
 ] as const;
 
-type ParcelField =
-  | (typeof DIM_FIELDS)[number]["key"]
-  | "price";
-type ParcelKey = ParcelField;
+type ParcelKey = (typeof DIM_FIELDS)[number]["key"];
 
 const PACKAGING_OPTIONS = [
   { id: "standard", name: "Standard Packaging", desc: "Talaria boxes, mailers and void fill" },
@@ -940,7 +937,6 @@ export default function CreateShipment() {
     length: "",
     width: "",
     height: "",
-    price: "",
   });
 
   const [serviceId, setServiceId] = useState("");
@@ -1057,10 +1053,6 @@ export default function CreateShipment() {
       else if (!/^\d+(\.\d+)?$/.test(v) || Number(v) <= 0)
         e[`parcel.${f.key}`] = `Enter a valid ${f.label.toLowerCase()} greater than 0`;
     }
-    const pv = parcel.price.trim();
-    if (!pv) e["parcel.price"] = "Freight charge is required";
-    else if (!/^\d+(\.\d+)?$/.test(pv) || Number(pv) <= 0)
-      e["parcel.price"] = "Enter a valid freight charge greater than 0";
     return e;
   }
 
@@ -1143,7 +1135,7 @@ export default function CreateShipment() {
           truckType: truckType,
           originMode: originMode,
           weight: parcel.weight ? Number(parcel.weight) : 0,
-          price: parcel.price ? Number(parcel.price) : 0,
+          price: Number(total) || 0,
           sender: {
             name: shipFrom.fullName,
             contactName: shipFrom.contactName,
@@ -1189,7 +1181,7 @@ export default function CreateShipment() {
     setResidential(false);
     setPackaging("standard");
     setUnpackaged(false);
-    setParcel({ weight: "", length: "", width: "", height: "", price: "" });
+    setParcel({ weight: "", length: "", width: "", height: "" });
     setServiceId("");
     setShipDate("");
     setReference("");
@@ -1485,25 +1477,6 @@ export default function CreateShipment() {
                           </Field>
                         ))}
                       </div>
-                    </div>
-
-                    <div className="mt-5">
-                      <Field
-                        label="Freight charge ($)"
-                        required
-                        error={errors["parcel.price"]}
-                      >
-                        <input
-                          inputMode="decimal"
-                          value={parcel.price}
-                          onChange={(e) => setParcelField("price", e.target.value)}
-                          placeholder="0.00"
-                          className={fieldInput(!!errors["parcel.price"])}
-                        />
-                      </Field>
-                      <p className="mt-1.5 text-xs text-neutral-500">
-                        Amount charged for this shipment — shown on the invoice &amp; receipt.
-                      </p>
                     </div>
 
                     <div className="mt-5">
@@ -1948,7 +1921,6 @@ export default function CreateShipment() {
                         />
                         <ReviewRow label="Unpackaged / crated" value={unpackaged ? "Yes" : "No"} />
                         <ReviewRow label="Weight" value={parcel.weight ? `${parcel.weight} kg` : "—"} />
-                        <ReviewRow label="Freight charge" value={parcel.price ? `$${Number(parcel.price).toFixed(2)}` : "—"} />
                         <ReviewRow
                           label="Dimensions"
                           value={
@@ -2023,22 +1995,20 @@ export default function CreateShipment() {
                   </dl>
                   <div className="mt-5 border-t border-neutral-200 pt-5">
                     <div className="flex items-center justify-between gap-6 text-xs text-neutral-500">
-                      <span>Est. subtotal</span>
+                      <span>Subtotal</span>
                       <span className="font-medium text-neutral-900">
-                        {selectedService ? money(selectedService.price + insuranceFee) : "—"}
+                        {selectedService ? money(selectedService.price) : "—"}
                       </span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between gap-6 text-xs text-neutral-500">
-                      <span>Freight charge</span>
-                      <span className="font-medium text-neutral-900">
-                        {parcel.price ? money(Number(parcel.price)) : "—"}
-                      </span>
-                    </div>
+                    {insuranceFee > 0 && (
+                      <div className="mt-2 flex items-center justify-between gap-6 text-xs text-neutral-500">
+                        <span>Insurance</span>
+                        <span className="font-medium text-neutral-900">{money(insuranceFee)}</span>
+                      </div>
+                    )}
                     <div className="mt-3 flex items-center justify-between gap-6 text-sm font-semibold text-neutral-900">
-                      <span>Total due</span>
-                      <span>
-                        {parcel.price ? money(Number(parcel.price)) : money(total)}
-                      </span>
+                      <span>Total</span>
+                      <span>{money(total)}</span>
                     </div>
                   </div>
                 </div>
