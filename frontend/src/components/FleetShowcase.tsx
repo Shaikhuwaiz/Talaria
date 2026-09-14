@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { FLEET } from "../utils/fleet";
-import TruckModelViewer from "./TruckModelViewer";
 
 export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
   const card = dark
@@ -25,20 +24,8 @@ export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
                 src={t.img}
                 alt={`${t.name} trailer`}
                 loading="lazy"
-                className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 ${
-                  t.model
-                    ? "opacity-80 group-hover:opacity-0"
-                    : "opacity-80 group-hover:scale-105 group-hover:opacity-95"
-                }`}
+                className="absolute inset-0 h-full w-full object-cover opacity-80 transition-all duration-500 group-hover:scale-105 group-hover:opacity-95"
               />
-              {t.model && (
-                <TruckModelViewer
-                  src={t.model}
-                  poster={t.img}
-                  alt={`${t.name} trailer 3D view`}
-                  className="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                />
-              )}
               <span
                 className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold ${t.badge}`}
               >
@@ -48,12 +35,9 @@ export default function FleetShowcase({ dark = false }: { dark?: boolean }) {
                 {t.category}
               </span>
               {t.model && (
-                <span className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  </span>
-                  Live 3D view
+                <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  360° 3D view
                 </span>
               )}
             </div>

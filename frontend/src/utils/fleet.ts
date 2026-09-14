@@ -119,7 +119,7 @@ export const FLEET: TruckFleet[] = [
     tierColor: "#d97706",
     badge: "bg-amber-500 text-white",
     icon: Container,
-    img: "/fleet/flatbed.jpg",
+    img: "/fleet/oversized.jpg",
     model: "/3dmodel/flatbedtruck.glb",
     sketchfab:
       "https://sketchfab.com/models/8f9f3bae89aa426bb0b0e3a8855cc30a/embed?autostart=1&transparent=1&ui_controls=0&ui_stop=0&ui_infos=0&ui_social=0&ui_share=0&ui_watermark=0&ui_fav=0&ui_embed=0&ui_help=0&ui_fullscreen=0&ui_settings=0&ui_annotations=0&ui_inspector=0&ui_hint=0&ui_ar=0&ui_vr=0&ui_theme=dark",
@@ -170,7 +170,7 @@ export const FLEET: TruckFleet[] = [
     tierColor: "#7c3aed",
     badge: "bg-violet-600 text-white",
     icon: Layers,
-    img: "/fleet/oversized.jpg",
+    img: "/hero/dusk.jpg",
     model: "/3dmodel/stepdecktruck.glb",
     sketchfab:
       "https://sketchfab.com/models/b55162849ad04765962fcf6dc38e75b9/embed?autostart=1&transparent=1&ui_controls=0&ui_stop=0&ui_infos=0&ui_social=0&ui_share=0&ui_watermark=0&ui_fav=0&ui_embed=0&ui_help=0&ui_fullscreen=0&ui_settings=0&ui_annotations=0&ui_inspector=0&ui_hint=0&ui_ar=0&ui_vr=0&ui_theme=dark",
