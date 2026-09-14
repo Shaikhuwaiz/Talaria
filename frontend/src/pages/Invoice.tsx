@@ -24,6 +24,10 @@ interface Shipment {
   createdAt?: string;
   weight?: number;
   price?: number;
+  service?: string;
+  servicePrice?: number;
+  insuranceFee?: number;
+  paymentMethod?: string;
   sender?: ContactInfo;
   recipient?: ContactInfo;
 }
@@ -81,20 +85,30 @@ const RouteFlags = ({ origin, destination }: { origin?: string; destination?: st
   );
 };
 
-// Itemized line items — uses the charge entered at booking when present,
-// otherwise falls back to an estimate for legacy shipments.
+// Itemized line items — mirrors the Order Summary from the booking flow
+// (service + insurance) when the rate was stored, otherwise falls back to an
+// estimate for legacy shipments.
 const lineItems = (s: Shipment) => {
   const wt = s.weight || 0;
   if (s.price && s.price > 0) {
-    return [
-      {
+    const items: { description: string; qty: number; rate: number }[] = [];
+    if (s.servicePrice && s.servicePrice > 0)
+      items.push({
+        description: `${s.service || "Freight"} — ${s.truckType || "Dry Van"}`,
+        qty: 1,
+        rate: s.servicePrice,
+      });
+    else
+      items.push({
         description: `Freight — ${s.truckType || "Dry Van"}${
           wt > 0 ? ` · ${wt} kg` : ""
         }`,
         qty: 1,
         rate: s.price,
-      },
-    ];
+      });
+    if (s.insuranceFee && s.insuranceFee > 0)
+      items.push({ description: "Insurance", qty: 1, rate: s.insuranceFee });
+    return items;
   }
   const base = 49.0;
   const rate = 0.95;
@@ -324,6 +338,7 @@ export default function Invoice({
             </div>
             <div className="mt-3 flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
               <CheckCircle2 size={14} /> {receipt ? "Amount paid" : "Payment status"}: PAID
+              {shipment.paymentMethod ? ` · ${shipment.paymentMethod}` : ""}
             </div>
           </div>
 

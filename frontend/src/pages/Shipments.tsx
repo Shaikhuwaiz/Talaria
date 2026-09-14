@@ -329,12 +329,12 @@ function ActiveOrderCard({
 
             {/* Route: flags + prominent white state names */}
             <p className="mt-2 inline-flex items-center text-[15px] font-semibold leading-snug">
-              <StateFlag location={s.origin} />
+              <StateFlag location={originLabel} />
               <span className="text-white">{originLabel}</span>
               <span className="mx-2 text-[#52525B]">
                 <ArrowRight size={14} />
               </span>
-              <StateFlag location={s.destination} />
+              <StateFlag location={destLabel} />
               <span className="text-white">{destLabel}</span>
             </p>
 

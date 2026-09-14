@@ -1136,6 +1136,10 @@ export default function CreateShipment() {
           originMode: originMode,
           weight: parcel.weight ? Number(parcel.weight) : 0,
           price: Number(total) || 0,
+          service: selectedService?.name || "",
+          servicePrice: selectedService?.price || 0,
+          insuranceFee: Number(insuranceFee) || 0,
+          paymentMethod,
           sender: {
             name: shipFrom.fullName,
             contactName: shipFrom.contactName,
