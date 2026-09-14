@@ -189,7 +189,7 @@ function StateFlag({ location }: { location?: string }) {
     <img
       src={src}
       alt={location}
-      className="h-3 w-4 rounded-[2px] object-cover"
+      className="mr-1.5 h-3 w-4 rounded-[2px] object-cover"
     />
   );
 }
