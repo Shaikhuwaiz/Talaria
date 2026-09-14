@@ -61,7 +61,7 @@ const TRUCK_IMAGES: Record<string, string> = {
   Flatbed: "/icons/flatbed_truck.png",
   "Box Truck": "/icons/box_van.png",
   "Logging Truck": "/icons/logged_truck.png",
-  "Step Deck": "/truck/step_deck.png",
+  "Step Deck": "/icons/stepdeck.png",
 };
 
 const truckImageOf = (type?: string): string =>
