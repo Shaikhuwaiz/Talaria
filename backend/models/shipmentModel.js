@@ -60,6 +60,10 @@ const shipmentSchema = new mongoose.Schema(
     // ✅ Billing + contact info captured at booking
     weight: { type: Number, default: 0 },
     price: { type: Number, default: 0 },
+    service: { type: String, default: "" },
+    servicePrice: { type: Number, default: 0 },
+    insuranceFee: { type: Number, default: 0 },
+    paymentMethod: { type: String, default: "" },
     sender: { type: contactSchema, default: () => ({}) },
     recipient: { type: contactSchema, default: () => ({}) },
 
